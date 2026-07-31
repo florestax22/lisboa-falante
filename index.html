@@ -1,80 +1,61 @@
 <!doctype html>
 <html lang="pt-PT">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Lisboa Falante — localização, orientação falada, percursos e serviços próximos no distrito de Lisboa.">
-  <title>Lisboa Falante — versão web pública 15.5</title>
-  <link rel="stylesheet" href="style.css?v=15.5">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lisboa Falante 15.6</title>
+<link rel="stylesheet" href="style.css?v=15.6">
 </head>
 <body>
 <a class="skip" href="#principal">Saltar para o conteúdo principal</a>
-<header class="topo"><div><h1>Lisboa Falante</h1><p>Versão web pública — distrito de Lisboa</p></div></header>
-<main id="principal" tabindex="-1">
-<p id="estado-servidor" class="estado" role="status" aria-live="polite">A preparar a aplicação e a localização.</p>
+<header><h1>Lisboa Falante</h1><p>Localização, locais próximos e percursos falados.</p></header>
+<main id="principal">
+<p id="estado-geral" class="estado" role="status" aria-live="assertive">Aplicação pronta. Autoriza a localização quando o navegador pedir.</p>
 
-<section aria-labelledby="titulo-localizacao"><h2 id="titulo-localizacao">Onde estou agora</h2>
-<p>Ao abrir a página, o Lisboa Falante tenta obter imediatamente a tua localização. O navegador pode pedir autorização.</p>
-<button id="localizar" class="principal" type="button">Obter ou atualizar localização agora</button>
-<button id="parar-gps" type="button" disabled>Parar atualização contínua do GPS</button>
-<button id="dizer-localizacao" type="button">Ouvir a minha localização</button>
-<p id="estado-gps" class="estado" role="status" aria-live="assertive">A aguardar localização.</p></section>
-
-<section aria-labelledby="titulo-percurso"><h2 id="titulo-percurso">Pesquisar e ouvir um percurso</h2>
-<label for="origem-manual">Partida escrita, caso não queiras usar o GPS</label>
-<input id="origem-manual" type="text" autocomplete="street-address" placeholder="Exemplo: Rua do Ouro 10, Lisboa">
-<button id="confirmar-origem" type="button">Confirmar esta partida escrita</button>
-<button id="usar-gps" type="button">Voltar a usar o GPS como partida</button>
-<p id="estado-origem" class="estado" role="status" aria-live="polite">Por defeito, a partida será a localização atual do GPS.</p>
-
-<label for="destino">Destino</label>
-<input id="destino" type="text" autocomplete="street-address" placeholder="Escreve uma morada, estação, hospital ou local">
-<fieldset><legend>Como queres ir</legend>
-<label><input type="radio" name="modo" value="WALKING" checked> A pé</label>
-<label><input type="radio" name="modo" value="TRANSIT"> Transportes públicos</label>
-<label><input type="radio" name="modo" value="BICYCLING"> Bicicleta</label>
-<label><input type="radio" name="modo" value="DRIVING"> Automóvel ou táxi</label>
-</fieldset>
-<button id="procurar" class="principal" type="button">Calcular percurso</button>
-<button id="narrar-percurso" type="button">Ouvir narrativa completa do percurso</button>
-<p id="estado-percurso" class="estado" role="status" aria-live="polite">Nenhum percurso calculado.</p>
-<div id="resultado" class="resultado" tabindex="-1"><p>Nenhum resultado.</p></div></section>
-
-<section aria-labelledby="titulo-pesquisa-livre"><h2 id="titulo-pesquisa-livre">Pesquisar qualquer local por escrito</h2>
-<label for="pesquisa-livre">O que procuras perto de ti?</label>
-<input id="pesquisa-livre" type="text" placeholder="Exemplo: supermercado, farmácia, café ou estação">
-<button id="procurar-livre" class="principal" type="button">Pesquisar perto da localização atual</button>
-<button id="narrar-livre" type="button">Ouvir resultados desta pesquisa</button>
-<div id="resultado-livre" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div></section>
-
-<section><h2>Locais próximos por categoria</h2>
-<div class="grupo"><button id="comercio" type="button">Procurar comércio próximo</button><button id="narrar-comercio" type="button">Ouvir comércio próximo</button></div>
-<div id="resultado-comercio" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
-<div class="grupo"><button id="transportes" type="button">Procurar transportes próximos</button><button id="narrar-transportes" type="button">Ouvir transportes próximos</button></div>
-<div id="resultado-transportes" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
-<div class="grupo"><button id="utilidades" type="button">Procurar utilidades públicas</button><button id="narrar-utilidades" type="button">Ouvir utilidades públicas</button></div>
-<div id="resultado-utilidades" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
-<div class="grupo"><button id="lazer" type="button">Procurar lazer e cultura</button><button id="narrar-lazer" type="button">Ouvir lazer e cultura</button></div>
-<div id="resultado-lazer" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
-<div class="grupo"><button id="emergencia" type="button">Procurar hospitais, polícia e bombeiros</button><button id="narrar-emergencia" type="button">Ouvir serviços de emergência próximos</button></div>
-<div id="resultado-emergencia" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
+<section>
+<h2>1. Localização atual</h2>
+<button id="obter-localizacao" class="principal">Obter localização agora</button>
+<button id="ouvir-localizacao">Ouvir localização</button>
+<p id="estado-gps" class="estado" role="status" aria-live="assertive">Ainda sem localização.</p>
 </section>
 
-<section><h2>Voz</h2>
-<p>A narrativa usa a voz portuguesa disponível no computador ou telemóvel.</p>
-<button id="testar-voz" type="button">Testar voz</button>
-<button id="usar-voz" class="principal" type="button">Ativar voz automática</button>
-<button id="desligar-voz" type="button" disabled>Desativar voz automática</button>
-<button id="repetir" type="button">Repetir última narrativa</button>
-<button id="parar-voz" type="button">Parar a fala</button>
-<p id="estado-voz" class="estado" role="status" aria-live="polite">A voz automática está desligada. Os botões “Ouvir” funcionam sempre.</p>
-<select id="voz-escolhida" hidden><option value="">Voz nativa</option></select></section>
+<section>
+<h2>2. Partida e destino</h2>
+<label for="partida">Partida escrita, opcional</label>
+<input id="partida" type="text" placeholder="Deixa vazio para usar o GPS">
+<label for="destino">Destino</label>
+<input id="destino" type="text" placeholder="Exemplo: Hospital de Santa Maria, Lisboa">
+<fieldset><legend>Modo</legend>
+<label><input type="radio" name="modo" value="pedestrian" checked> A pé</label>
+<label><input type="radio" name="modo" value="bicycle"> Bicicleta</label>
+<label><input type="radio" name="modo" value="auto"> Automóvel ou táxi</label>
+</fieldset>
+<button id="calcular" class="principal">Calcular percurso</button>
+<button id="ouvir-percurso">Ouvir percurso</button>
+<p id="estado-percurso" class="estado" role="status" aria-live="polite">Nenhum percurso calculado.</p>
+<div id="resultado-percurso" class="resultado" tabindex="-1"></div>
+</section>
 
-<section class="emergencia"><h2>Segurança</h2><p>O Lisboa Falante é uma ajuda. Não substitui a bengala, cão-guia nem a atenção ao trânsito.</p><button id="ligar-112" class="botao-emergencia" type="button">Ligar para o cento e doze</button></section>
-<details><summary>Diagnóstico técnico</summary><pre id="diagnostico">Sem diagnóstico.</pre></details>
-<div id="mapa-servicos" aria-hidden="true" style="width:1px;height:1px;position:absolute;left:-9999px"></div>
+<section>
+<h2>3. Procurar perto de mim</h2>
+<label for="pesquisa">O que procuras?</label>
+<input id="pesquisa" type="text" placeholder="Exemplo: farmácia, supermercado, café ou multibanco">
+<button id="procurar" class="principal">Procurar perto da localização</button>
+<button id="ouvir-resultados">Ouvir resultados</button>
+<p id="estado-pesquisa" class="estado" role="status" aria-live="polite">Ainda sem pesquisa.</p>
+<div id="resultado-pesquisa" class="resultado" tabindex="-1"></div>
+</section>
+
+<section>
+<h2>Voz</h2>
+<button id="testar-voz">Testar voz</button>
+<button id="parar-voz">Parar voz</button>
+<p>Os botões “Ouvir” usam a voz portuguesa disponível no dispositivo.</p>
+</section>
+
+<section class="aviso"><h2>Segurança</h2><p>Esta aplicação é uma ajuda. Não substitui bengala, cão-guia nem atenção ao trânsito.</p></section>
+<details><summary>Diagnóstico técnico</summary><pre id="diagnostico">Sem erros registados.</pre></details>
 </main>
-<dialog id="confirmar-chamada"><h2>Confirmar chamada</h2><p id="chamada-texto">Queres ligar?</p><button id="sim-ligar" type="button">Sim, ligar</button><button id="nao-ligar" type="button">Não, cancelar</button></dialog>
-<script src="config.js"></script>
-<script src="app.js?v=15.5"></script>
-</body></html>
+<script src="app.js?v=15.6"></script>
+</body>
+</html>
