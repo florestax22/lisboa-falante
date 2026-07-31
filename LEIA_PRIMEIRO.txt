@@ -1,0 +1,12 @@
+LISBOA FALANTE 15.4 - PUBLICACAO HTTPS
+
+1. Extraia a pasta completa.
+2. Execute apenas: PUBLICAR_LISBOA_FALANTE.bat
+3. Quando o navegador abrir, autorize o GitHub CLI.
+4. Volte à janela preta. Ela confirma o login antes de continuar.
+5. Quando for pedida, cole a chave Google Maps e prima Enter.
+
+O ficheiro nao fecha se o primeiro login falhar. Volta a tentar.
+O repositorio criado chama-se lisboa-falante e fica publico.
+O endereço final será:
+https://SEU-UTILIZADOR.github.io/lisboa-falante/

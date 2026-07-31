@@ -1,0 +1,1 @@
+Coloca aqui o ficheiro lisboa_falante.env

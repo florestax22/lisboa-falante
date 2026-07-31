@@ -1,0 +1,73 @@
+LISBOA FALANTE 15.4 — CRIAR REPOSITÓRIO E HTTPS
+
+O HTTPS será fornecido gratuitamente pelo GitHub Pages.
+O endereço ficará parecido com:
+https://SEU-UTILIZADOR.github.io/lisboa-falante/
+
+PASSO 1 — CRIAR O REPOSITÓRIO
+1. Entre em github.com.
+2. Abra o menu do seu perfil e escolha "Your repositories" ou "Os seus repositórios".
+3. Escolha "New" ou "Novo".
+4. Nome do repositório: lisboa-falante
+5. Escolha Público. No GitHub Free, o Pages funciona em repositórios públicos.
+6. Não adicione README, .gitignore ou licença, porque já estão neste pacote.
+7. Escolha "Create repository".
+
+PASSO 2 — ENVIAR ESTES FICHEIROS
+1. No repositório vazio, escolha "uploading an existing file" ou "Add file", "Upload files".
+2. Envie todo o conteúdo desta pasta, incluindo a pasta .github.
+3. Confirme com "Commit changes".
+
+ATENÇÃO:
+No Windows, a pasta .github pode parecer escondida em alguns programas. Ela tem de ser enviada.
+A forma mais segura é extrair o ZIP e arrastar todos os ficheiros e pastas para a página de envio do GitHub.
+
+PASSO 3 — GUARDAR A CHAVE GOOGLE MAPS
+1. No repositório, abra "Settings".
+2. Abra "Secrets and variables".
+3. Abra "Actions".
+4. Escolha "New repository secret".
+5. Nome exato: GOOGLE_MAPS_API_KEY
+6. No valor, cole a chave Google Maps.
+7. Grave em "Add secret".
+
+PASSO 4 — ATIVAR GITHUB PAGES
+1. Ainda em "Settings", abra "Pages".
+2. Em "Build and deployment", na opção "Source", escolha "GitHub Actions".
+3. Abra o separador "Actions" do repositório.
+4. Abra "Publicar Lisboa Falante em HTTPS".
+5. Caso ainda não tenha arrancado, escolha "Run workflow".
+
+PASSO 5 — ABRIR O SITE
+Quando a publicação terminar, o endereço aparece no trabalho do GitHub Actions e em Settings, Pages.
+Será um endereço HTTPS semelhante a:
+https://SEU-UTILIZADOR.github.io/lisboa-falante/
+
+PASSO 6 — RESTRINGIR A CHAVE GOOGLE
+Na Google Cloud, restrinja a chave por "Websites" ou "HTTP referrers".
+Adicione:
+https://SEU-UTILIZADOR.github.io/lisboa-falante/*
+
+Também limite a chave apenas às APIs realmente usadas pelo Lisboa Falante.
+
+IMPORTANTE SOBRE SEGURANÇA
+Uma chave usada pelo Google Maps no navegador pode ser vista tecnicamente por quem abrir o site.
+O secret impede que ela fique escrita no repositório, mas não a torna invisível no navegador.
+A proteção real é restringir a chave ao endereço HTTPS do Lisboa Falante e às APIs necessárias.
+
+TESTE FINAL
+1. Abra o endereço HTTPS no iPhone.
+2. Autorize a localização.
+3. Teste "Iniciar GPS contínuo".
+4. Teste a voz.
+5. Teste uma partida manual.
+6. Teste um destino dentro do distrito de Lisboa.
+
+MODO AUTOMATICO RECOMENDADO NO WINDOWS
+1. Extraia o ZIP por completo.
+2. Abra a pasta extraida.
+3. Execute PUBLICAR_NO_GITHUB.bat.
+4. O assistente verifica Git e GitHub CLI, abre a entrada oficial no GitHub, cria o repositorio, envia os ficheiros, pede a chave sem a mostrar e ativa o Pages.
+5. Se disser que falta Git, execute: winget install --id Git.Git -e
+6. Se disser que falta GitHub CLI, execute: winget install --id GitHub.cli -e
+7. Depois de instalar, feche e volte a abrir a pasta e execute novamente PUBLICAR_NO_GITHUB.bat.

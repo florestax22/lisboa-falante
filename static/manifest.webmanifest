@@ -1,0 +1,10 @@
+{
+  "name": "Lisboa Falante versão 15",
+  "short_name": "Lisboa Falante",
+  "lang": "pt-PT",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f7",
+  "theme_color": "#123a5a",
+  "description": "Orientação acessível e serviços próximos no distrito de Lisboa."
+}

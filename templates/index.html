@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lisboa Falante — versão web 15.3</title>
+  <link rel="stylesheet" href="/static/style.css?v=15.3">
+</head>
+<body>
+<a class="skip" href="#principal">Saltar para o conteúdo principal</a>
+<header class="topo"><div><h1>Lisboa Falante</h1><p>Versão web completa para computador</p></div></header>
+<main id="principal" tabindex="-1">
+<p id="estado-servidor" class="estado" role="status" aria-live="polite">A verificar a aplicação.</p>
+<section><h2>Voz da aplicação</h2>
+<label for="voz-escolhida">Escolher voz</label>
+<select id="voz-escolhida"><option value="Raquel">Raquel</option><option value="Rute">Rute</option></select>
+<button id="testar-voz" type="button">Testar voz</button>
+<button id="usar-voz" class="principal" type="button">Ativar voz da aplicação</button>
+<button id="desligar-voz" type="button" disabled>Desativar voz</button>
+<p id="estado-voz" class="estado" role="status" aria-live="polite">Voz desligada.</p></section>
+<section><h2>Localização</h2>
+<button id="localizar" class="principal" type="button">Iniciar GPS contínuo</button>
+<button id="parar-gps" type="button" disabled>Parar GPS</button>
+<button id="dizer-localizacao" type="button">Narrativa: dizer onde estou</button>
+<p id="estado-gps" class="estado" role="status" aria-live="polite">GPS desligado.</p></section>
+<section><h2>Locais próximos</h2>
+<div class="grupo"><button id="comercio" type="button">Procurar comércio próximo</button><button id="narrar-comercio" type="button">Narrativa do comércio próximo</button></div>
+<div id="resultado-comercio" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
+<div class="grupo"><button id="transportes" type="button">Procurar transportes próximos</button><button id="narrar-transportes" type="button">Narrativa dos transportes próximos</button></div>
+<div id="resultado-transportes" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
+<div class="grupo"><button id="utilidades" type="button">Procurar utilidades públicas</button><button id="narrar-utilidades" type="button">Narrativa das utilidades públicas</button></div>
+<div id="resultado-utilidades" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
+<div class="grupo"><button id="lazer" type="button">Procurar lazer e cultura</button><button id="narrar-lazer" type="button">Narrativa do lazer e cultura</button></div>
+<div id="resultado-lazer" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
+<div class="grupo"><button id="emergencia" type="button">Procurar hospitais, polícia e bombeiros</button><button id="narrar-emergencia" type="button">Narrativa de emergência próxima</button></div>
+<div id="resultado-emergencia" class="resultado" tabindex="-1"><p>Ainda sem pesquisa.</p></div>
+</section>
+<section><h2>Planear deslocação</h2>
+<label for="origem-manual">Partida</label>
+<input id="origem-manual" autocomplete="street-address" placeholder="Rua, número, código postal e localidade">
+<button id="confirmar-origem" type="button">Confirmar partida</button>
+<button id="usar-gps" type="button">Usar a localização do GPS como partida</button>
+<p id="estado-origem" class="estado" role="status" aria-live="polite">A partida será a localização do GPS, salvo se escreveres e confirmares outra morada.</p>
+<label for="destino">Destino</label>
+<input id="destino" autocomplete="street-address" placeholder="Morada ou nome do destino">
+<fieldset><legend>Meio de transporte</legend>
+<label><input type="radio" name="modo" value="WALK" checked> A pé</label>
+<label><input type="radio" name="modo" value="TRANSIT"> Transportes públicos</label>
+<label><input type="radio" name="modo" value="BICYCLE"> Bicicleta</label>
+<label><input type="radio" name="modo" value="DRIVE"> Automóvel ou táxi</label>
+</fieldset>
+<button id="procurar" class="principal" type="button">Calcular percurso</button>
+<button id="narrar-percurso" type="button">Narrativa completa do percurso</button>
+<p id="estado-percurso" class="estado" role="status" aria-live="polite">Nenhum percurso calculado.</p>
+<div id="resultado" class="resultado" tabindex="-1"><p>Nenhum resultado.</p></div></section>
+<section><h2>Controlos de voz</h2><button id="repetir" type="button">Repetir última narrativa</button><button id="parar-voz" type="button">Parar a fala</button></section>
+<section class="emergencia"><h2>Segurança</h2><p>Segue com cuidado e usa corretamente a bengala.</p><button id="ligar-112" class="botao-emergencia" type="button">Ligar para o cento e doze</button></section>
+<details><summary>Diagnóstico técnico</summary><pre id="diagnostico">Sem diagnóstico.</pre></details>
+</main>
+<dialog id="confirmar-chamada"><h2>Confirmar chamada</h2><p id="chamada-texto">Queres ligar?</p><button id="sim-ligar" type="button">Sim, ligar</button><button id="nao-ligar" type="button">Não, cancelar</button></dialog>
+<script src="/static/app.js?v=15.3"></script>
+</body></html>

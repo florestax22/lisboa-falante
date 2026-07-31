@@ -1,0 +1,8 @@
+# A chave local nunca deve entrar no repositório
+config.js
+
+# Ficheiros do sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

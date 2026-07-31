@@ -1,0 +1,18 @@
+LISBOA FALANTE — VERSÃO WEB 15 CORRIGIDA
+
+1. Extrai completamente o ZIP.
+2. Executa: ABRIR LISBOA FALANTE WEB.bat
+3. O navegador abre quando o servidor estiver pronto.
+4. Mantém a janela preta aberta.
+
+MELHORIAS DESTA CORREÇÃO
+- Corrigida compatibilidade com Python 3.8 e versões seguintes.
+- O navegador só abre depois de o servidor responder.
+- Botão individual de narrativa para comércio.
+- Botão individual de narrativa para transportes.
+- Botão individual de narrativa para utilidades públicas.
+- Botão individual de narrativa para lazer e cultura.
+- Botão individual de narrativa para hospitais, polícia e bombeiros.
+- Botão Narrativa completa do percurso, desde a partida ao destino.
+- Aviso de segurança curto: segue com cuidado e usa corretamente a bengala.
+- Raquel principal e Rute alternativa, conforme as vozes instaladas no Windows.

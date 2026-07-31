@@ -1,0 +1,57 @@
+name: Publicar Lisboa Falante em HTTPS
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Obter ficheiros do repositório
+        uses: actions/checkout@v6
+
+      - name: Confirmar que a chave foi configurada
+        shell: bash
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          if [ -z "$GOOGLE_MAPS_API_KEY" ]; then
+            echo "ERRO: falta o secret GOOGLE_MAPS_API_KEY."
+            exit 1
+          fi
+
+      - name: Criar configuração para o site publicado
+        shell: bash
+        env:
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+        run: |
+          mkdir -p site
+          cp index.html app.js style.css .nojekyll site/
+          printf 'window.LISBOA_FALANTE_CONFIG = {\n  GOOGLE_MAPS_API_KEY: "%s"\n};\n' "$GOOGLE_MAPS_API_KEY" > site/config.js
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar ficheiros para publicação
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+      - name: Publicar em GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

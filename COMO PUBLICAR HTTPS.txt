@@ -1,0 +1,21 @@
+LISBOA FALANTE — PUBLICAÇÃO HTTPS
+
+1. Extrai todo o ZIP para uma pasta.
+2. Executa: PUBLICAR LISBOA FALANTE HTTPS.bat
+3. O script instala Git e GitHub CLI apenas se estiverem em falta.
+4. Só abre o navegador quando precisares de autorizar:
+   - GitHub;
+   - Render;
+   - acesso ao repositório privado.
+5. Quando o Render pedir GOOGLE_MAPS_API_KEY, carrega CTRL+V.
+   A chave já estará copiada para a área de transferência.
+6. Confirma a criação do serviço.
+7. Volta à janela preta e carrega ENTER.
+8. O painel do Render e a ligação HTTPS serão abertos.
+
+IMPORTANTE:
+- Não feches a janela enquanto o processo decorre.
+- O repositório GitHub fica privado.
+- A chave Google Maps não é enviada para o GitHub.
+- O endereço 127.0.0.1 continua apenas para testes locais.
+- A ligação onrender.com será pública e funcionará noutros computadores.
