@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lisboa Falante 15.7</title>
-<link rel="stylesheet" href="style.css?v=15.7">
+<meta name="theme-color" content="#083b66">
+<title>Lisboa Falante 15.8</title>
+<link rel="stylesheet" href="style.css?v=15.8">
 </head>
 <body>
 <a class="skip" href="#principal">Saltar para o conteúdo principal</a>
-<header><h1>Lisboa Falante</h1><p>Localização, locais próximos e percursos falados.</p></header>
+<header><h1>Lisboa Falante</h1><p>Localização, locais próximos, percursos falados e guia por voz em tempo real.</p></header>
 <main id="principal">
 <p id="estado-geral" class="estado" role="status" aria-live="assertive">Aplicação pronta. Autoriza a localização quando o navegador pedir.</p>
 
@@ -20,14 +21,28 @@
 </section>
 
 <section>
-<h2>2. Partida e destino</h2>
+<h2>2. Escolher a voz</h2>
+<fieldset>
+<legend>Que voz queres ouvir?</legend>
+<label><input type="radio" name="tipo-voz" value="aplicacao" checked> Voz da aplicação. Procura primeiro a Raquel e depois outra voz portuguesa.</label>
+<label><input type="radio" name="tipo-voz" value="dispositivo"> Voz do dispositivo. Usa a voz predefinida do iPhone, Android ou computador.</label>
+</fieldset>
+<button id="guardar-voz" class="principal">Guardar opção de voz</button>
+<button id="testar-voz">Testar a voz escolhida</button>
+<button id="repetir-ultima">Repetir última narrativa</button>
+<button id="parar-voz">Parar voz</button>
+<p id="estado-voz" class="estado" role="status" aria-live="polite">A carregar as vozes disponíveis.</p>
+</section>
+
+<section>
+<h2>3. Partida e destino</h2>
 <label for="partida">Partida escrita, opcional</label>
-<input id="partida" type="text" placeholder="Deixa vazio para usar o GPS">
-<button type="button" class="ouvir-campo" data-campo="partida" data-rotulo="Partida">Ouvir o campo Partida</button>
+<input id="partida" type="text" autocomplete="street-address" placeholder="Deixa vazio para usar o GPS">
+<button type="button" class="ouvir-campo" data-campo="partida" data-rotulo="Partida">Narrativa falada do campo Partida</button>
 
 <label for="destino">Destino</label>
-<input id="destino" type="text" placeholder="Exemplo: Hospital de Santa Maria, Lisboa">
-<button type="button" class="ouvir-campo" data-campo="destino" data-rotulo="Destino">Ouvir o campo Destino</button>
+<input id="destino" type="text" autocomplete="street-address" placeholder="Exemplo: Hospital de Santa Maria, Lisboa">
+<button type="button" class="ouvir-campo" data-campo="destino" data-rotulo="Destino">Narrativa falada do campo Destino</button>
 
 <fieldset><legend>Modo</legend>
 <label><input type="radio" name="modo" value="pedestrian" checked> A pé</label>
@@ -41,27 +56,29 @@
 </section>
 
 <section>
-<h2>3. Procurar perto de mim</h2>
+<h2>4. Guia por voz em tempo real</h2>
+<p>Primeiro calcula um percurso. Depois inicia o guia e mantém o navegador aberto.</p>
+<button id="iniciar-guia" class="principal" disabled>Iniciar guia por voz em tempo real</button>
+<button id="estado-guia-falado" disabled>Ouvir estado atual do guia</button>
+<button id="recalcular-guia" disabled>Recalcular desde a localização atual</button>
+<button id="parar-guia" disabled>Parar guia em tempo real</button>
+<p id="estado-guia" class="estado" role="status" aria-live="assertive">Guia parado. Calcula primeiro um percurso.</p>
+</section>
+
+<section>
+<h2>5. Procurar perto de mim</h2>
 <label for="pesquisa">O que procuras?</label>
-<input id="pesquisa" type="text" placeholder="Exemplo: farmácia, supermercado, café ou multibanco">
-<button type="button" class="ouvir-campo" data-campo="pesquisa" data-rotulo="Pesquisa">Ouvir o campo Pesquisa</button>
+<input id="pesquisa" type="text" enterkeyhint="search" placeholder="Exemplo: farmácia, supermercado, café ou multibanco">
+<button type="button" class="ouvir-campo" data-campo="pesquisa" data-rotulo="Pesquisa">Narrativa falada do campo Pesquisa</button>
 <button id="procurar" class="principal">Procurar perto da localização</button>
 <button id="ouvir-resultados">Narrativa falada de todos os resultados</button>
 <p id="estado-pesquisa" class="estado" role="status" aria-live="polite">Ainda sem pesquisa.</p>
 <div id="resultado-pesquisa" class="resultado" tabindex="-1"></div>
 </section>
 
-<section>
-<h2>Voz</h2>
-<button id="testar-voz">Testar voz Raquel</button>
-<button id="repetir-ultima">Repetir última narrativa</button>
-<button id="parar-voz">Parar voz</button>
-<p id="estado-voz" class="estado" role="status" aria-live="polite">A aplicação vai preferir a voz Raquel quando ela estiver instalada no dispositivo.</p>
-</section>
-
-<section class="aviso"><h2>Segurança</h2><p>Esta aplicação é uma ajuda. Não substitui bengala, cão-guia nem atenção ao trânsito.</p></section>
+<section class="aviso"><h2>Segurança</h2><p>Esta aplicação é uma ajuda. Não substitui bengala, cão-guia, treino de mobilidade nem atenção ao trânsito. A precisão do GPS pode variar.</p><p>No iPhone e em alguns Android, o navegador pode suspender GPS e voz se o ecrã for bloqueado.</p></section>
 <details><summary>Diagnóstico técnico</summary><pre id="diagnostico">Sem erros registados.</pre></details>
 </main>
-<script src="app.js?v=15.7"></script>
+<script src="app.js?v=15.8"></script>
 </body>
 </html>
