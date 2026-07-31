@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lisboa Falante 15.6</title>
-<link rel="stylesheet" href="style.css?v=15.6">
+<title>Lisboa Falante 15.7</title>
+<link rel="stylesheet" href="style.css?v=15.7">
 </head>
 <body>
 <a class="skip" href="#principal">Saltar para o conteúdo principal</a>
@@ -15,7 +15,7 @@
 <section>
 <h2>1. Localização atual</h2>
 <button id="obter-localizacao" class="principal">Obter localização agora</button>
-<button id="ouvir-localizacao">Ouvir localização</button>
+<button id="ouvir-localizacao">Narrativa falada da localização</button>
 <p id="estado-gps" class="estado" role="status" aria-live="assertive">Ainda sem localização.</p>
 </section>
 
@@ -23,15 +23,19 @@
 <h2>2. Partida e destino</h2>
 <label for="partida">Partida escrita, opcional</label>
 <input id="partida" type="text" placeholder="Deixa vazio para usar o GPS">
+<button type="button" class="ouvir-campo" data-campo="partida" data-rotulo="Partida">Ouvir o campo Partida</button>
+
 <label for="destino">Destino</label>
 <input id="destino" type="text" placeholder="Exemplo: Hospital de Santa Maria, Lisboa">
+<button type="button" class="ouvir-campo" data-campo="destino" data-rotulo="Destino">Ouvir o campo Destino</button>
+
 <fieldset><legend>Modo</legend>
 <label><input type="radio" name="modo" value="pedestrian" checked> A pé</label>
 <label><input type="radio" name="modo" value="bicycle"> Bicicleta</label>
 <label><input type="radio" name="modo" value="auto"> Automóvel ou táxi</label>
 </fieldset>
 <button id="calcular" class="principal">Calcular percurso</button>
-<button id="ouvir-percurso">Ouvir percurso</button>
+<button id="ouvir-percurso">Narrativa falada do percurso</button>
 <p id="estado-percurso" class="estado" role="status" aria-live="polite">Nenhum percurso calculado.</p>
 <div id="resultado-percurso" class="resultado" tabindex="-1"></div>
 </section>
@@ -40,22 +44,24 @@
 <h2>3. Procurar perto de mim</h2>
 <label for="pesquisa">O que procuras?</label>
 <input id="pesquisa" type="text" placeholder="Exemplo: farmácia, supermercado, café ou multibanco">
+<button type="button" class="ouvir-campo" data-campo="pesquisa" data-rotulo="Pesquisa">Ouvir o campo Pesquisa</button>
 <button id="procurar" class="principal">Procurar perto da localização</button>
-<button id="ouvir-resultados">Ouvir resultados</button>
+<button id="ouvir-resultados">Narrativa falada de todos os resultados</button>
 <p id="estado-pesquisa" class="estado" role="status" aria-live="polite">Ainda sem pesquisa.</p>
 <div id="resultado-pesquisa" class="resultado" tabindex="-1"></div>
 </section>
 
 <section>
 <h2>Voz</h2>
-<button id="testar-voz">Testar voz</button>
+<button id="testar-voz">Testar voz Raquel</button>
+<button id="repetir-ultima">Repetir última narrativa</button>
 <button id="parar-voz">Parar voz</button>
-<p>Os botões “Ouvir” usam a voz portuguesa disponível no dispositivo.</p>
+<p id="estado-voz" class="estado" role="status" aria-live="polite">A aplicação vai preferir a voz Raquel quando ela estiver instalada no dispositivo.</p>
 </section>
 
 <section class="aviso"><h2>Segurança</h2><p>Esta aplicação é uma ajuda. Não substitui bengala, cão-guia nem atenção ao trânsito.</p></section>
 <details><summary>Diagnóstico técnico</summary><pre id="diagnostico">Sem erros registados.</pre></details>
 </main>
-<script src="app.js?v=15.6"></script>
+<script src="app.js?v=15.7"></script>
 </body>
 </html>

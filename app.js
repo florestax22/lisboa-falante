@@ -1,23 +1,48 @@
 "use strict";
 (() => {
-  const state = { position:null, address:"", routeText:"", searchText:"", lastSpeech:"" };
+  const state = { position:null, address:"", routeText:"", searchText:"", lastSpeech:"", chosenVoice:"" };
   const $ = id => document.getElementById(id);
   const set = (id,msg) => { const e=$(id); if(e)e.textContent=msg; };
   const esc = s => String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const diag = msg => { set("diagnostico", new Date().toLocaleTimeString("pt-PT")+" — "+msg); };
 
-  function voice(){
+  function chooseVoice(){
+    if (!("speechSynthesis" in window)) return null;
     const vs = speechSynthesis.getVoices();
-    return vs.find(v=>/^pt-PT/i.test(v.lang)) || vs.find(v=>/^pt/i.test(v.lang)) || null;
+    const preferred = [
+      v => /raquel/i.test(v.name) && /^pt-PT/i.test(v.lang),
+      v => /raquel/i.test(v.name),
+      v => /natural|online/i.test(v.name) && /^pt-PT/i.test(v.lang),
+      v => /microsoft/i.test(v.name) && /^pt-PT/i.test(v.lang),
+      v => /^pt-PT/i.test(v.lang),
+      v => /^pt/i.test(v.lang)
+    ];
+    for (const test of preferred) {
+      const found = vs.find(test);
+      if (found) return found;
+    }
+    return null;
+  }
+  function updateVoiceStatus(){
+    const v=chooseVoice();
+    state.chosenVoice=v ? v.name : "voz padrão do navegador";
+    set("estado-voz", v ? "Voz escolhida: "+v.name+"." : "Raquel não está disponível. Será usada a voz portuguesa padrão do dispositivo.");
   }
   function speak(msg){
     msg=String(msg||"").trim(); if(!msg)return;
     state.lastSpeech=msg;
     if(!("speechSynthesis" in window)){set("estado-geral","Este navegador não disponibiliza voz.");return;}
     speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(msg); u.lang="pt-PT"; u.rate=1; u.volume=1;
-    const v=voice(); if(v)u.voice=v; speechSynthesis.speak(u);
+    const u=new SpeechSynthesisUtterance(msg); u.lang="pt-PT"; u.rate=0.95; u.pitch=1; u.volume=1;
+    const v=chooseVoice(); if(v)u.voice=v;
+    u.onerror=()=>set("estado-voz","A voz não conseguiu narrar. Tenta novamente.");
+    speechSynthesis.speak(u);
   }
+  if ("speechSynthesis" in window) {
+    speechSynthesis.onvoiceschanged=updateVoiceStatus;
+    setTimeout(updateVoiceStatus,300);
+  }
+
   async function fetchJson(url, options={}, timeout=20000){
     const controller=new AbortController(); const timer=setTimeout(()=>controller.abort(),timeout);
     try{const r=await fetch(url,{...options,signal:controller.signal,headers:{"Accept":"application/json",...(options.headers||{})}});if(!r.ok)throw new Error("serviço respondeu "+r.status);return await r.json();}
@@ -45,7 +70,7 @@
     navigator.geolocation.getCurrentPosition(async p=>{
       state.position={lat:p.coords.latitude,lon:p.coords.longitude,accuracy:Math.round(p.coords.accuracy||0)};
       try{state.address=await reverse(state.position.lat,state.position.lon);}catch(e){state.address="coordenadas "+state.position.lat.toFixed(5)+", "+state.position.lon.toFixed(5);diag("GPS recebido; falhou identificação da rua: "+e.message);}
-      const msg="Localização atual: "+state.address+". Precisão aproximada: "+state.position.accuracy+" metros.";
+      const msg="Localização atual: "+state.address+". Precisão aproximada: "+distanceText(state.position.accuracy)+".";
       set("estado-gps",msg); speak(msg);
     },e=>{const m=geoError(e);set("estado-gps",m);diag(m);},{enableHighAccuracy:true,timeout:30000,maximumAge:0});
   }
@@ -54,16 +79,35 @@
     if(!state.position)throw new Error("Primeiro obtém a localização ou escreve uma partida.");
     return {lat:state.position.lat,lon:state.position.lon,address:state.address||"localização atual"};
   }
-  function distanceText(m){return m<1000?Math.round(m)+" metros":(m/1000).toFixed(1).replace(".",",")+" quilómetros"}
-  function durationText(sec){const min=Math.round(sec/60);if(min<60)return min+" minutos";const h=Math.floor(min/60),r=min%60;return h+" horas"+(r?" e "+r+" minutos":"")}
+  function distanceText(m){
+    m=Number(m)||0;
+    if(m<1000)return Math.max(1,Math.round(m))+" metros";
+    const km=m/1000;
+    const decimals=km<10?1:0;
+    return km.toFixed(decimals).replace(".",",")+" quilómetros";
+  }
+  function durationText(sec){const min=Math.max(1,Math.round(sec/60));if(min<60)return min+" minutos";const h=Math.floor(min/60),r=min%60;return h+" horas"+(r?" e "+r+" minutos":"")}
   function instruction(step){
     const type=step.maneuver&&step.maneuver.type||"continue"; const mod=step.maneuver&&step.maneuver.modifier||""; const road=step.name?" para "+step.name:"";
     const map={depart:"Começa",arrive:"Chegaste ao destino",turn:"Vira",continue:"Continua",merge:"Entra",fork:"Segue",roundabout:"Entra na rotunda",exit:"Sai"};
     const mods={left:" à esquerda",right:" à direita",straight:" em frente","slight left":" ligeiramente à esquerda","slight right":" ligeiramente à direita","sharp left":" acentuadamente à esquerda","sharp right":" acentuadamente à direita"};
-    return (map[type]||"Continua")+(mods[mod]||"")+road;
+    const base=(map[type]||"Continua")+(mods[mod]||"")+road;
+    return {text:base, distance:Number(step.distance)||0};
+  }
+  function routeStepSentence(step,index){
+    const dist=step.distance>0?" durante "+distanceText(step.distance):"";
+    return "Passo "+(index+1)+": "+step.text+dist+".";
+  }
+  function renderRoute(o,d,totalDistance,totalDuration,steps){
+    state.routeText="Percurso de "+o.address+" até "+d.address+". Distância total "+distanceText(totalDistance)+". Tempo aproximado "+durationText(totalDuration)+". "+steps.map(routeStepSentence).join(" ");
+    $("resultado-percurso").innerHTML="<h3>Percurso</h3><p><strong>Partida:</strong> "+esc(o.address)+".</p><p><strong>Destino:</strong> "+esc(d.address)+".</p><p>Distância total: "+esc(distanceText(totalDistance))+". Tempo aproximado: "+esc(durationText(totalDuration))+".</p><button type=\"button\" id=\"ouvir-resumo-percurso\">Ouvir resumo e instruções</button><ol>"+steps.map((s,i)=>"<li>"+esc(s.text+(s.distance>0?" durante "+distanceText(s.distance):""))+". <button type=\"button\" class=\"ouvir-passo\" data-passo=\""+i+"\">Ouvir este passo</button></li>").join("")+"</ol>";
+    $("ouvir-resumo-percurso").onclick=()=>speak(state.routeText);
+    document.querySelectorAll(".ouvir-passo").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.passo);speak(routeStepSentence(steps[i],i));});
+    set("estado-percurso","Percurso calculado. Usa Narrativa falada do percurso ou ouve cada passo separadamente.");
+    $("resultado-percurso").focus();
   }
   async function calculate(){
-    const dest=$("destino").value.trim(); if(!dest){set("estado-percurso","Escreve o destino.");return;}
+    const dest=$("destino").value.trim(); if(!dest){set("estado-percurso","Escreve o destino.");speak("Escreve o destino.");return;}
     set("estado-percurso","A calcular o percurso."); $("resultado-percurso").innerHTML="";
     try{
       const [o,d]=await Promise.all([getOrigin(),geocode(dest)]); const mode=document.querySelector('input[name="modo"]:checked').value;
@@ -71,21 +115,17 @@
       const url="https://router.project-osrm.org/route/v1/"+profile+"/"+o.lon+","+o.lat+";"+d.lon+","+d.lat+"?overview=false&steps=true&alternatives=false";
       let j;
       try{j=await fetchJson(url,{},30000);}catch(e){
-        const costing=mode;
-        const body={locations:[{lat:o.lat,lon:o.lon},{lat:d.lat,lon:d.lon}],costing,units:"kilometers",language:"pt-PT",directions_options:{units:"kilometers"}};
+        const body={locations:[{lat:o.lat,lon:o.lon},{lat:d.lat,lon:d.lon}],costing:mode,units:"kilometers",language:"pt-PT",directions_options:{units:"kilometers"}};
         j=await fetchJson("https://valhalla1.openstreetmap.de/route",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)},30000);
         const trip=j.trip;if(!trip||!trip.legs)throw e;
-        const mans=trip.legs[0].maneuvers||[]; const steps=mans.map(x=>x.instruction||"Continua");
-        state.routeText="Percurso de "+o.address+" até "+d.address+". Distância "+distanceText((trip.summary.length||0)*1000)+". Tempo aproximado "+durationText(trip.summary.time||0)+". "+steps.map((x,i)=>"Passo "+(i+1)+": "+x+".").join(" ");
-        $("resultado-percurso").innerHTML="<h3>Percurso</h3><p>Distância: "+esc(distanceText((trip.summary.length||0)*1000))+". Tempo: "+esc(durationText(trip.summary.time||0))+".</p><ol>"+steps.map(s=>"<li>"+esc(s)+"</li>").join("")+"</ol>";
-        set("estado-percurso","Percurso calculado."); $("resultado-percurso").focus(); return;
+        const mans=trip.legs[0].maneuvers||[];
+        const steps=mans.map(x=>({text:x.instruction||"Continua",distance:(Number(x.length)||0)*1000}));
+        renderRoute(o,d,(trip.summary.length||0)*1000,trip.summary.time||0,steps); return;
       }
       if(j.code!=="Ok"||!j.routes||!j.routes.length)throw new Error("O serviço não encontrou um percurso.");
       const r=j.routes[0], steps=(r.legs||[]).flatMap(l=>l.steps||[]).map(instruction);
-      state.routeText="Percurso de "+o.address+" até "+d.address+". Distância "+distanceText(r.distance)+". Tempo aproximado "+durationText(r.duration)+". "+steps.map((x,i)=>"Passo "+(i+1)+": "+x+".").join(" ");
-      $("resultado-percurso").innerHTML="<h3>Percurso</h3><p>Distância: "+esc(distanceText(r.distance))+". Tempo: "+esc(durationText(r.duration))+".</p><ol>"+steps.map(s=>"<li>"+esc(s)+"</li>").join("")+"</ol>";
-      set("estado-percurso","Percurso calculado."); $("resultado-percurso").focus();
-    }catch(e){set("estado-percurso","Não consegui calcular: "+e.message);diag("Percurso: "+e.message)}
+      renderRoute(o,d,r.distance,r.duration,steps);
+    }catch(e){const m="Não consegui calcular: "+e.message;set("estado-percurso",m);speak(m);diag("Percurso: "+e.message)}
   }
   function overpassFilter(q){
     const n=q.toLowerCase();
@@ -101,8 +141,8 @@
     return '[name~"'+q.replace(/["\\]/g," ")+'",i]';
   }
   async function searchNearby(){
-    const q=$("pesquisa").value.trim(); if(!q){set("estado-pesquisa","Escreve o que procuras.");return;}
-    if(!state.position){set("estado-pesquisa","Primeiro obtém a localização atual.");return;}
+    const q=$("pesquisa").value.trim(); if(!q){set("estado-pesquisa","Escreve o que procuras.");speak("Escreve o que procuras.");return;}
+    if(!state.position){set("estado-pesquisa","Primeiro obtém a localização atual.");speak("Primeiro obtém a localização atual.");return;}
     set("estado-pesquisa","A procurar "+q+" perto de ti."); $("resultado-pesquisa").innerHTML="";
     const f=overpassFilter(q),lat=state.position.lat,lon=state.position.lon;
     const query='[out:json][timeout:25];(node(around:4000,'+lat+','+lon+')'+f+';way(around:4000,'+lat+','+lon+')'+f+';relation(around:4000,'+lat+','+lon+')'+f+';);out center tags 30;';
@@ -110,16 +150,25 @@
       const j=await fetchJson("https://overpass-api.de/api/interpreter",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body:"data="+encodeURIComponent(query)},35000);
       const items=(j.elements||[]).map(x=>{const p=x.center||x,t=x.tags||{};if(!p.lat||!p.lon)return null;const name=t.name||t.brand||q;const addr=[t["addr:street"],t["addr:housenumber"],t["addr:city"]].filter(Boolean).join(" ");const dx=(p.lon-lon)*Math.cos(lat*Math.PI/180),dy=p.lat-lat,dist=Math.sqrt(dx*dx+dy*dy)*111320;return{name,addr,dist}}).filter(Boolean).sort((a,b)=>a.dist-b.dist).slice(0,10);
       if(!items.length)throw new Error("Não encontrei resultados num raio de quatro quilómetros.");
-      state.searchText="Resultados para "+q+". "+items.map((x,i)=>(i+1)+": "+x.name+", a cerca de "+distanceText(x.dist)+(x.addr?", "+x.addr:"")+".").join(" ");
-      $("resultado-pesquisa").innerHTML=items.map((x,i)=>"<article><h3>"+esc((i+1)+". "+x.name)+"</h3><p>"+esc((x.addr?x.addr+". ":"")+"Distância aproximada: "+distanceText(x.dist)+".")+"</p></article>").join("");
-      set("estado-pesquisa",items.length+" resultados encontrados."); $("resultado-pesquisa").focus();
-    }catch(e){set("estado-pesquisa","Não consegui procurar: "+e.message);diag("Pesquisa: "+e.message)}
+      const sentence=(x,i)=>(i+1)+": "+x.name+", a cerca de "+distanceText(x.dist)+(x.addr?", em "+x.addr:"")+".";
+      state.searchText="Resultados para "+q+". "+items.map(sentence).join(" ");
+      $("resultado-pesquisa").innerHTML=items.map((x,i)=>"<article><h3>"+esc((i+1)+". "+x.name)+"</h3><p>"+esc((x.addr?x.addr+". ":"")+"Distância aproximada: "+distanceText(x.dist)+".")+"</p><button type=\"button\" class=\"ouvir-resultado\" data-resultado=\""+i+"\">Ouvir este resultado</button></article>").join("");
+      document.querySelectorAll(".ouvir-resultado").forEach(b=>b.onclick=()=>{const i=Number(b.dataset.resultado);speak(sentence(items[i],i));});
+      set("estado-pesquisa",items.length+" resultados encontrados. Podes ouvir todos ou cada resultado separadamente."); $("resultado-pesquisa").focus();
+    }catch(e){const m="Não consegui procurar: "+e.message;set("estado-pesquisa",m);speak(m);diag("Pesquisa: "+e.message)}
+  }
+  function speakField(id,label){
+    const value=$(id).value.trim();
+    speak(label+". "+(value?"Conteúdo: "+value+".":"O campo está vazio."));
   }
   $("obter-localizacao").onclick=locate;
   $("ouvir-localizacao").onclick=()=>speak(state.address?"Localização atual: "+state.address:"Ainda não tenho localização.");
   $("calcular").onclick=calculate; $("ouvir-percurso").onclick=()=>speak(state.routeText||"Primeiro calcula o percurso.");
   $("procurar").onclick=searchNearby; $("ouvir-resultados").onclick=()=>speak(state.searchText||"Primeiro faz uma pesquisa.");
-  $("testar-voz").onclick=()=>speak("Lisboa Falante. A voz está a funcionar."); $("parar-voz").onclick=()=>speechSynthesis.cancel();
+  document.querySelectorAll(".ouvir-campo").forEach(b=>b.onclick=()=>speakField(b.dataset.campo,b.dataset.rotulo));
+  $("testar-voz").onclick=()=>speak("Lisboa Falante. Esta é a voz selecionada. Quando a voz Raquel está disponível, ela tem prioridade.");
+  $("repetir-ultima").onclick=()=>speak(state.lastSpeech||"Ainda não existe nenhuma narrativa para repetir.");
+  $("parar-voz").onclick=()=>speechSynthesis.cancel();
   ["destino","pesquisa"].forEach(id=>$(id).addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();id==="destino"?calculate():searchNearby()}}));
   window.addEventListener("error",e=>diag("JavaScript: "+e.message+" na linha "+e.lineno));
 })();
