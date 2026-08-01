@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#174a5c">
 <meta name="description" content="Lisboa Falante: orientação acessível por GPS, pesquisa de serviços próximos, percursos narrados e guia por voz em tempo real.">
-<title>Lisboa Falante — A cidade também se ouve</title>
-<link rel="stylesheet" href="style.css?v=16.0">
+<title>Lisboa Falante — A cidade também se ouve — versão 16.1</title>
+<link rel="stylesheet" href="style.css?v=16.1">
 </head>
 <body>
 <a class="skip" href="#principal">Saltar para o conteúdo principal</a>
@@ -28,6 +28,8 @@
   <a href="#percurso">Percurso</a>
   <a href="#guia">Guia em tempo real</a>
   <a href="#proximidade">Perto de mim</a>
+  <a href="#atalhos-proximos">Serviços rápidos</a>
+  <a href="#telefones">Telefones úteis</a>
 </nav>
 
 <main id="principal">
@@ -97,6 +99,42 @@
 <div id="resultado-pesquisa" class="resultado" tabindex="-1"></div>
 </section>
 
+
+<section id="atalhos-proximos" aria-labelledby="titulo-atalhos-proximos">
+<h2 id="titulo-atalhos-proximos"><span class="numero">6</span> Serviços rápidos perto de mim</h2>
+<p class="ajuda">Prioridade às pessoas cegas: cada botão usa a localização confirmada, apresenta distância e direção aproximadas e permite ouvir os resultados.</p>
+<div class="grade-botoes" role="group" aria-label="Pesquisas rápidas perto da localização atual">
+<button type="button" class="pesquisa-rapida principal" data-query="passadeiras">Passadeiras próximas</button>
+<button type="button" class="pesquisa-rapida" data-query="obras na via pública">Obras e vias em intervenção</button>
+<button type="button" class="pesquisa-rapida" data-query="restaurantes">Restaurantes</button>
+<button type="button" class="pesquisa-rapida" data-query="tascas e cafés">Tascas, cafés e bares</button>
+<button type="button" class="pesquisa-rapida" data-query="comida rápida">Comida rápida</button>
+<button type="button" class="pesquisa-rapida" data-query="supermercados">Supermercados e mercearias</button>
+<button type="button" class="pesquisa-rapida" data-query="hotéis pensões residenciais">Hotéis, pensões e residenciais</button>
+<button type="button" class="pesquisa-rapida" data-query="praças de táxis">Praças de táxis</button>
+<button type="button" class="pesquisa-rapida" data-query="farmácias">Farmácias</button>
+<button type="button" class="pesquisa-rapida" data-query="hospitais">Hospitais e urgências</button>
+<button type="button" class="pesquisa-rapida" data-query="polícia">Polícia</button>
+<button type="button" class="pesquisa-rapida" data-query="bombeiros">Bombeiros</button>
+<button type="button" class="pesquisa-rapida" data-query="casas de banho públicas">Casas de banho públicas</button>
+<button type="button" class="pesquisa-rapida" data-query="paragens de autocarro">Paragens de autocarro</button>
+</div>
+<p class="nota-dados">Os resultados dependem dos registos públicos disponíveis. “Atual” significa consultado no momento; não significa que todas as autarquias tenham publicado todos os dados.</p>
+</section>
+
+<section id="telefones" aria-labelledby="titulo-telefones">
+<h2 id="titulo-telefones"><span class="numero">7</span> Telefones úteis</h2>
+<p class="ajuda">Os botões abrem a chamada no telemóvel. Em emergência real, usa o 112.</p>
+<div class="grade-botoes">
+<a class="ligacao emergencia" href="tel:112">Ligar 112 — emergência</a>
+<a class="ligacao" href="tel:808242424">Ligar SNS 24 — 808 24 24 24</a>
+<a class="ligacao" href="tel:800250250">Ligar CIAV — intoxicações — 800 250 250</a>
+<a class="ligacao" href="tel:213913900">Ligar Cruz Vermelha Portuguesa — 213 913 900</a>
+</div>
+<button id="ouvir-telefones">Ouvir os telefones úteis</button>
+<p class="nota-dados">Para polícia, bombeiros ou emergência médica urgente, o número nacional é 112. Os contactos locais encontrados pela pesquisa podem estar incompletos.</p>
+</section>
+
 <section class="aviso" aria-labelledby="titulo-seguranca">
 <h2 id="titulo-seguranca">Segurança</h2>
 <p>Esta aplicação é uma ajuda. Não substitui bengala, cão-guia, treino de mobilidade nem atenção ao trânsito. A precisão do GPS pode variar.</p>
@@ -109,8 +147,8 @@
 <footer>
   <p><strong>Lisboa Falante</strong> — A cidade também se ouve.</p>
   <p class="desenvolvimento" role="note">Projeto em desenvolvimento e em fase de testes. Os percursos e resultados devem ser confirmados no local.</p>
-  <p class="creditos">Dados geográficos baseados em OpenStreetMap. Versão 16.0 — GPS afinado e guia falado contínuo.</p>
+  <p class="creditos">Dados geográficos baseados em OpenStreetMap. Versão 16.1 — serviços próximos, passadeiras, obras e telefones úteis.</p>
 </footer>
-<script src="app.js?v=16.0"></script>
+<script src="app.js?v=16.1"></script>
 </body>
 </html>

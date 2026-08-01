@@ -218,20 +218,42 @@
     if(ok){state.guideStep=nearestStepIndex(state.position);state.announced.clear();setGuideStatus("Novo percurso calculado. O guia continua ativo.",true);}
   }
 
-  function overpassFilter(q){const n=q.toLowerCase();if(n.includes("farm"))return '[amenity="pharmacy"]';if(n.includes("super")||n.includes("mercado"))return '[shop="supermarket"]';if(n.includes("café")||n.includes("cafe"))return '[amenity="cafe"]';if(n.includes("restaurante"))return '[amenity="restaurant"]';if(n.includes("multibanco")||n.includes("atm"))return '[amenity="atm"]';if(n.includes("hospital"))return '[amenity="hospital"]';if(n.includes("polícia")||n.includes("policia"))return '[amenity="police"]';if(n.includes("autocarro")||n.includes("paragem"))return '[highway="bus_stop"]';if(n.includes("comboio")||n.includes("estação")||n.includes("estacao"))return '[railway="station"]';return '[name~"'+q.replace(/["\\]/g," ")+'",i]';}
+  function overpassFilter(q){
+    const n=q.toLowerCase();
+    if(n.includes("passadeira"))return '[highway="crossing"]';
+    if(n.includes("obra"))return '[highway="construction"]';
+    if(n.includes("farm"))return '[amenity="pharmacy"]';
+    if(n.includes("super")||n.includes("mercado")||n.includes("mercearia"))return '[shop~"supermarket|convenience|grocery"]';
+    if(n.includes("tasca")||n.includes("café")||n.includes("cafe")||n.includes("bar"))return '[amenity~"cafe|bar|pub"]';
+    if(n.includes("comida rápida")||n.includes("comida rapida")||n.includes("fast food")||n.includes("mcdonald")||n.includes("burger"))return '[amenity="fast_food"]';
+    if(n.includes("restaurante"))return '[amenity="restaurant"]';
+    if(n.includes("hotel")||n.includes("pensão")||n.includes("pensao")||n.includes("residencial")||n.includes("alojamento"))return '[tourism~"hotel|hostel|guest_house|motel"]';
+    if(n.includes("táxi")||n.includes("taxi"))return '[amenity="taxi"]';
+    if(n.includes("multibanco")||n.includes("atm"))return '[amenity="atm"]';
+    if(n.includes("hospital")||n.includes("urgência")||n.includes("urgencia"))return '[amenity="hospital"]';
+    if(n.includes("polícia")||n.includes("policia"))return '[amenity="police"]';
+    if(n.includes("bombeiro"))return '[amenity="fire_station"]';
+    if(n.includes("casa de banho")||n.includes("sanitário")||n.includes("sanitario"))return '[amenity="toilets"]';
+    if(n.includes("autocarro")||n.includes("paragem"))return '[highway="bus_stop"]';
+    if(n.includes("comboio")||n.includes("estação")||n.includes("estacao"))return '[railway="station"]';
+    return '[name~"'+q.replace(/["\\]/g," ")+'",i]';
+  }
   async function searchNearby(){
     const q=$("pesquisa").value.trim();if(!q){set("estado-pesquisa","Escreve o que procuras.");speak("Escreve o que procuras.");return;}if(!state.position){set("estado-pesquisa","Primeiro obtém a localização atual.");speak("Primeiro obtém a localização atual.");return;}
     set("estado-pesquisa","A procurar "+q+" perto de ti.");$("resultado-pesquisa").innerHTML="";
-    const f=overpassFilter(q),lat=state.position.lat,lon=state.position.lon,query='[out:json][timeout:25];(node(around:4000,'+lat+','+lon+')'+f+';way(around:4000,'+lat+','+lon+')'+f+';relation(around:4000,'+lat+','+lon+')'+f+';);out center tags 30;';
+    const f=overpassFilter(q),lat=state.position.lat,lon=state.position.lon;
+    const radius=q.toLowerCase().includes("passadeira")?1200:4000;
+    const query='[out:json][timeout:25];(node(around:'+radius+','+lat+','+lon+')'+f+';way(around:'+radius+','+lat+','+lon+')'+f+';relation(around:'+radius+','+lat+','+lon+')'+f+';);out center tags 40;';
     try{
       const j=await fetchJson("https://overpass-api.de/api/interpreter",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body:"data="+encodeURIComponent(query)},35000);
-      const items=(j.elements||[]).map(x=>{const p=x.center||x,t=x.tags||{};if(!p.lat||!p.lon)return null;const name=t.name||t.brand||q,addr=[t["addr:street"],t["addr:housenumber"],t["addr:city"]].filter(Boolean).join(" "),dist=haversine({lat,lon},{lat:Number(p.lat),lon:Number(p.lon)});return{name,addr,dist};}).filter(Boolean).sort((a,b)=>a.dist-b.dist).slice(0,10);
-      if(!items.length)throw new Error("Não encontrei resultados num raio de quatro quilómetros.");
-      const sentence=(x,i)=>(i+1)+": "+x.name+", a cerca de "+distanceText(x.dist)+(x.addr?", em "+x.addr:"")+".";
+      const items=(j.elements||[]).map(x=>{const p=x.center||x,t=x.tags||{};if(!p.lat||!p.lon)return null;const generic=q.toLowerCase().includes("passadeira")?"Passadeira":q.toLowerCase().includes("obra")?"Via assinalada em obras":q;const name=t.name||t.brand||generic,addr=[t["addr:street"],t["addr:housenumber"],t["addr:city"]].filter(Boolean).join(" "),dist=haversine({lat,lon},{lat:Number(p.lat),lon:Number(p.lon)}),dir=cardinal(bearing({lat,lon},{lat:Number(p.lat),lon:Number(p.lon)})),phone=t.phone||t["contact:phone"]||"";return{name,addr,dist,dir,phone,lat:Number(p.lat),lon:Number(p.lon)};}).filter(Boolean).sort((a,b)=>a.dist-b.dist).slice(0,12);
+      if(!items.length)throw new Error("Não encontrei registos num raio de "+distanceText(radius)+".");
+      const sentence=(x,i)=>(i+1)+": "+x.name+", a cerca de "+distanceText(x.dist)+", na direção "+x.dir+(x.addr?", em "+x.addr:"")+(x.phone?". Telefone "+x.phone:"")+".";
       state.searchText="Resultados para "+q+". "+items.map(sentence).join(" ");
-      $("resultado-pesquisa").innerHTML=items.map((x,i)=>"<article><h3>"+esc((i+1)+". "+x.name)+"</h3><p>"+esc((x.addr?x.addr+". ":"")+"Distância aproximada: "+distanceText(x.dist)+".")+"</p><button type=\"button\" class=\"ouvir-resultado\" data-resultado=\""+i+"\">Narrativa falada deste resultado</button></article>").join("");
+      $("resultado-pesquisa").innerHTML=items.map((x,i)=>"<article><h3>"+esc((i+1)+". "+x.name)+"</h3><p>"+esc((x.addr?x.addr+". ":"")+"Distância aproximada: "+distanceText(x.dist)+". Direção: "+x.dir+".")+"</p>"+(x.phone?"<a class=\"telefone-resultado\" href=\"tel:"+esc(x.phone.replace(/[^+\d]/g,""))+"\">Ligar para "+esc(x.phone)+"</a>":"")+"<button type=\"button\" class=\"ouvir-resultado\" data-resultado=\""+i+"\">Narrativa falada deste resultado</button><button type=\"button\" class=\"ir-resultado\" data-resultado=\""+i+"\">Usar como destino</button></article>").join("");
       document.querySelectorAll(".ouvir-resultado").forEach(b=>b.onclick=()=>speak(sentence(items[Number(b.dataset.resultado)],Number(b.dataset.resultado))));
-      set("estado-pesquisa",items.length+" resultados encontrados. Podes ouvir todos ou cada resultado separadamente.");$("resultado-pesquisa").focus();
+      document.querySelectorAll(".ir-resultado").forEach(b=>b.onclick=()=>{const x=items[Number(b.dataset.resultado)];$("destino").value=x.lat+","+x.lon;speak(x.name+" ficou definido como destino. Vou calcular o percurso.");calculate();});
+      set("estado-pesquisa",items.length+" resultados encontrados. Podes ouvir cada resultado ou usá-lo como destino.");$("resultado-pesquisa").focus();
     }catch(e){const m="Não consegui procurar: "+e.message;set("estado-pesquisa",m);speak(m);diag("Pesquisa: "+e.message);}
   }
   function speakField(id,label){const value=$(id).value.trim();speak(label+". "+(value?"Conteúdo: "+value+".":"O campo está vazio."));}
@@ -247,5 +269,7 @@
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&state.guideActive&&!state.wakeLock)requestWakeLock();});
   window.addEventListener("beforeunload",()=>{if(state.guideWatch!==null)navigator.geolocation.clearWatch(state.guideWatch);releaseWakeLock();});
   window.addEventListener("error",e=>diag("JavaScript: "+e.message+" na linha "+e.lineno));
+  document.querySelectorAll(".pesquisa-rapida").forEach(b=>b.onclick=()=>{$("pesquisa").value=b.dataset.query;searchNearby();});
+  const ouvirTelefones=$("ouvir-telefones");if(ouvirTelefones)ouvirTelefones.onclick=()=>speak("Telefones úteis. Emergência, 112. SNS 24, 808 24 24 24. Centro de Informação Antivenenos, 800 250 250. Cruz Vermelha Portuguesa, 213 913 900.");
   updateVoiceStatus();
 })();
