@@ -62,7 +62,7 @@
   async function geocode(q){
     const u="https://nominatim.openstreetmap.org/search?format=jsonv2&accept-language=pt&countrycodes=pt&limit=5&q="+encodeURIComponent(q);
     const a=await fetchJson(u);if(!a.length)throw new Error("Não encontrei essa morada ou local.");
-    const x=a.find(v=>{const n=(v.display_name||"").toLowerCase();return ["lisboa","loures","vila franca de xira","sintra","cascais","oeiras","amadora","odivelas"].some(k=>n.includes(k));})||a[0];
+    const x=a.find(v=>{const n=(v.display_name||"").toLowerCase();return ["alcochete","almada","amadora","barreiro","cascais","lisboa","loures","mafra","moita","montijo","odivelas","oeiras","palmela","seixal","sesimbra","setúbal","setubal","sintra","vila franca de xira"].some(k=>n.includes(k));})||a[0];
     return {lat:Number(x.lat),lon:Number(x.lon),address:x.display_name};
   }
   function geoError(e){
