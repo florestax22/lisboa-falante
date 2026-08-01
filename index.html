@@ -3,25 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#083b66">
-<title>Lisboa Falante 15.8</title>
-<link rel="stylesheet" href="style.css?v=15.8">
+<meta name="theme-color" content="#174a5c">
+<meta name="description" content="Lisboa Falante: orientação acessível por GPS, pesquisa de serviços próximos, percursos narrados e guia por voz em tempo real.">
+<title>Lisboa Falante — A cidade também se ouve</title>
+<link rel="stylesheet" href="style.css?v=16.0">
 </head>
 <body>
 <a class="skip" href="#principal">Saltar para o conteúdo principal</a>
-<header><h1>Lisboa Falante</h1><p>Localização, locais próximos, percursos falados e guia por voz em tempo real.</p></header>
-<main id="principal">
-<p id="estado-geral" class="estado" role="status" aria-live="assertive">Aplicação pronta. Autoriza a localização quando o navegador pedir.</p>
+<header class="topo-institucional">
+  <div class="marca" aria-label="Lisboa Falante">
+    <div class="simbolo" aria-hidden="true">LF</div>
+    <div>
+      <p class="designacao">Projeto de mobilidade acessível</p>
+      <h1>Lisboa Falante</h1>
+      <p class="lema">A cidade também se ouve.</p>
+    </div>
+  </div>
+  <p class="apresentacao">Orientação falada, localização, serviços próximos e apoio à deslocação para pessoas cegas, com baixa visão e para qualquer pessoa que precise de instruções claras.</p>
+</header>
 
-<section>
-<h2>1. Localização atual</h2>
+<nav class="atalhos" aria-label="Atalhos principais">
+  <a href="#localizacao">Localização</a>
+  <a href="#voz">Voz</a>
+  <a href="#percurso">Percurso</a>
+  <a href="#guia">Guia em tempo real</a>
+  <a href="#proximidade">Perto de mim</a>
+</nav>
+
+<main id="principal">
+<p id="estado-geral" class="estado destaque-estado" role="status" aria-live="assertive">Aplicação pronta. Autoriza a localização quando o navegador pedir.</p>
+
+<section id="localizacao" aria-labelledby="titulo-localizacao">
+<h2 id="titulo-localizacao"><span class="numero">1</span> Localização atual</h2>
+<p class="ajuda">Usa o GPS preciso do dispositivo. A aplicação rejeita leituras fracas e saltos de localização.</p>
 <button id="obter-localizacao" class="principal">Obter localização agora</button>
 <button id="ouvir-localizacao">Narrativa falada da localização</button>
 <p id="estado-gps" class="estado" role="status" aria-live="assertive">Ainda sem localização.</p>
 </section>
 
-<section>
-<h2>2. Escolher a voz</h2>
+<section id="voz" aria-labelledby="titulo-voz">
+<h2 id="titulo-voz"><span class="numero">2</span> Escolher a voz</h2>
 <fieldset>
 <legend>Que voz queres ouvir?</legend>
 <label><input type="radio" name="tipo-voz" value="aplicacao" checked> Voz da aplicação. Procura primeiro a Raquel e depois outra voz portuguesa.</label>
@@ -34,8 +55,8 @@
 <p id="estado-voz" class="estado" role="status" aria-live="polite">A carregar as vozes disponíveis.</p>
 </section>
 
-<section>
-<h2>3. Partida e destino</h2>
+<section id="percurso" aria-labelledby="titulo-percurso">
+<h2 id="titulo-percurso"><span class="numero">3</span> Partida e destino</h2>
 <label for="partida">Partida escrita, opcional</label>
 <input id="partida" type="text" autocomplete="street-address" placeholder="Deixa vazio para usar o GPS">
 <button type="button" class="ouvir-campo" data-campo="partida" data-rotulo="Partida">Narrativa falada do campo Partida</button>
@@ -44,7 +65,7 @@
 <input id="destino" type="text" autocomplete="street-address" placeholder="Exemplo: Hospital de Santa Maria, Lisboa">
 <button type="button" class="ouvir-campo" data-campo="destino" data-rotulo="Destino">Narrativa falada do campo Destino</button>
 
-<fieldset><legend>Modo</legend>
+<fieldset><legend>Modo de deslocação</legend>
 <label><input type="radio" name="modo" value="pedestrian" checked> A pé</label>
 <label><input type="radio" name="modo" value="bicycle"> Bicicleta</label>
 <label><input type="radio" name="modo" value="auto"> Automóvel ou táxi</label>
@@ -55,9 +76,9 @@
 <div id="resultado-percurso" class="resultado" tabindex="-1"></div>
 </section>
 
-<section>
-<h2>4. Guia por voz em tempo real</h2>
-<p>Primeiro calcula um percurso. Depois inicia o guia e mantém o navegador aberto.</p>
+<section id="guia" aria-labelledby="titulo-guia">
+<h2 id="titulo-guia"><span class="numero">4</span> Guia por voz em tempo real</h2>
+<p class="ajuda">Primeiro confirma uma localização com boa precisão e calcula o percurso. Depois inicia o guia, mantém o navegador aberto e o ecrã ativo.</p>
 <button id="iniciar-guia" class="principal" disabled>Iniciar guia por voz em tempo real</button>
 <button id="estado-guia-falado" disabled>Ouvir estado atual do guia</button>
 <button id="recalcular-guia" disabled>Recalcular desde a localização atual</button>
@@ -65,8 +86,8 @@
 <p id="estado-guia" class="estado" role="status" aria-live="assertive">Guia parado. Calcula primeiro um percurso.</p>
 </section>
 
-<section>
-<h2>5. Procurar perto de mim</h2>
+<section id="proximidade" aria-labelledby="titulo-proximidade">
+<h2 id="titulo-proximidade"><span class="numero">5</span> Procurar perto de mim</h2>
 <label for="pesquisa">O que procuras?</label>
 <input id="pesquisa" type="text" enterkeyhint="search" placeholder="Exemplo: farmácia, supermercado, café ou multibanco">
 <button type="button" class="ouvir-campo" data-campo="pesquisa" data-rotulo="Pesquisa">Narrativa falada do campo Pesquisa</button>
@@ -76,9 +97,20 @@
 <div id="resultado-pesquisa" class="resultado" tabindex="-1"></div>
 </section>
 
-<section class="aviso"><h2>Segurança</h2><p>Esta aplicação é uma ajuda. Não substitui bengala, cão-guia, treino de mobilidade nem atenção ao trânsito. A precisão do GPS pode variar.</p><p>No iPhone e em alguns Android, o navegador pode suspender GPS e voz se o ecrã for bloqueado.</p></section>
-<details><summary>Diagnóstico técnico</summary><pre id="diagnostico">Sem erros registados.</pre></details>
+<section class="aviso" aria-labelledby="titulo-seguranca">
+<h2 id="titulo-seguranca">Segurança</h2>
+<p>Esta aplicação é uma ajuda. Não substitui bengala, cão-guia, treino de mobilidade nem atenção ao trânsito. A precisão do GPS pode variar.</p>
+<p>No iPhone e em alguns Android, o navegador pode suspender GPS e voz se o ecrã for bloqueado.</p>
+</section>
+
+<details class="diagnostico-oculto"><summary>Diagnóstico técnico reservado</summary><pre id="diagnostico">Sem erros registados.</pre></details>
 </main>
-<script src="app.js?v=15.8"></script>
+
+<footer>
+  <p><strong>Lisboa Falante</strong> — A cidade também se ouve.</p>
+  <p class="desenvolvimento" role="note">Projeto em desenvolvimento e em fase de testes. Os percursos e resultados devem ser confirmados no local.</p>
+  <p class="creditos">Dados geográficos baseados em OpenStreetMap. Versão 16.0 — GPS afinado e guia falado contínuo.</p>
+</footer>
+<script src="app.js?v=16.0"></script>
 </body>
 </html>

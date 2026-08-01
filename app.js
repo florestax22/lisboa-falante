@@ -4,7 +4,8 @@
     position:null, address:"", routeText:"", searchText:"", lastSpeech:"", chosenVoice:"",
     voiceMode:localStorage.getItem("lisboaFalanteVoiceMode") || "aplicacao",
     route:null, guideWatch:null, guideActive:false, guideStep:0, guideStatus:"Guia parado.",
-    announced:new Set(), offRouteCount:0, lastReroute:0, wakeLock:null, lastReverseAt:0
+    announced:new Set(), offRouteCount:0, lastReroute:0, wakeLock:null, lastReverseAt:0,
+    lastGoodPosition:null, lastProgressPosition:null, lastProgressSpeech:0, rejectedFixes:0, calibrationWatch:null
   };
   const $ = id => document.getElementById(id);
   const set = (id,msg) => { const e=$(id); if(e)e.textContent=msg; };
@@ -70,16 +71,50 @@
     if(e&&e.code===3)return "O GPS demorou demasiado. Tenta novamente junto a uma janela ou no exterior.";
     return "Não consegui obter a localização.";
   }
-  function updatePosition(p){state.position={lat:p.coords.latitude,lon:p.coords.longitude,accuracy:Math.round(p.coords.accuracy||0),heading:p.coords.heading,speed:p.coords.speed};}
+  function bearing(a,b){
+    const r=x=>x*Math.PI/180,d=x=>x*180/Math.PI;
+    const y=Math.sin(r(b.lon-a.lon))*Math.cos(r(b.lat));
+    const x=Math.cos(r(a.lat))*Math.sin(r(b.lat))-Math.sin(r(a.lat))*Math.cos(r(b.lat))*Math.cos(r(b.lon-a.lon));
+    return (d(Math.atan2(y,x))+360)%360;
+  }
+  function cardinal(deg){
+    if(deg===null||deg===undefined||Number.isNaN(Number(deg)))return "direção ainda não determinada";
+    const names=["norte","nordeste","nascente","sudeste","sul","sudoeste","poente","noroeste"];
+    return names[Math.round(Number(deg)/45)%8];
+  }
+  function rawPosition(p){return {lat:Number(p.coords.latitude),lon:Number(p.coords.longitude),accuracy:Math.round(Number(p.coords.accuracy)||9999),heading:p.coords.heading,speed:p.coords.speed,timestamp:Number(p.timestamp)||Date.now()};}
+  function acceptPosition(p,{calibration=false}={}){
+    const next=rawPosition(p);
+    if(!Number.isFinite(next.lat)||!Number.isFinite(next.lon)||next.accuracy>120){state.rejectedFixes++;diag("Leitura GPS rejeitada. Precisão: "+next.accuracy+" metros.");return false;}
+    const prev=state.lastGoodPosition;
+    if(prev){
+      const dt=Math.max(1,(next.timestamp-prev.timestamp)/1000),jump=haversine(prev,next),possible=Math.max(80,dt*12+prev.accuracy+next.accuracy);
+      if(jump>possible && jump>250){state.rejectedFixes++;diag("Salto GPS rejeitado: "+Math.round(jump)+" metros.");return false;}
+      if((next.heading===null||Number.isNaN(Number(next.heading)))&&jump>=3)next.heading=bearing(prev,next);
+    }
+    if(!calibration && next.accuracy>80)return false;
+    state.lastGoodPosition=next;state.position=next;return true;
+  }
   function locate(){
     if(!navigator.geolocation){set("estado-gps","Este navegador não suporta localização.");return;}
-    set("estado-gps","A pedir localização ao dispositivo. Autoriza quando o navegador perguntar.");
-    navigator.geolocation.getCurrentPosition(async p=>{
-      updatePosition(p);
-      try{state.address=await reverse(state.position.lat,state.position.lon);}catch(e){state.address="coordenadas "+state.position.lat.toFixed(5)+", "+state.position.lon.toFixed(5);diag("GPS recebido; falhou identificação da rua: "+e.message);}
-      const msg="Localização atual: "+state.address+". Precisão aproximada: "+distanceText(state.position.accuracy)+".";
+    if(state.calibrationWatch!==null)navigator.geolocation.clearWatch(state.calibrationWatch);
+    set("estado-gps","A calibrar o GPS. Mantém-te no exterior e espera por uma leitura precisa.");
+    speak("A calibrar o GPS. Não vou aceitar uma localização imprecisa.");
+    let best=null,count=0,finished=false;const started=Date.now();
+    const finish=async()=>{
+      if(finished)return;finished=true;if(state.calibrationWatch!==null)navigator.geolocation.clearWatch(state.calibrationWatch);state.calibrationWatch=null;
+      if(!best||best.coords.accuracy>100){const m="Não obtive GPS seguro. A melhor precisão foi "+(best?distanceText(best.coords.accuracy):"desconhecida")+". Vai para o exterior, ativa a localização precisa e tenta novamente.";set("estado-gps",m);speak(m);return;}
+      acceptPosition(best,{calibration:true});
+      try{state.address=await reverse(state.position.lat,state.position.lon);}catch(e){state.address="coordenadas "+state.position.lat.toFixed(5)+", "+state.position.lon.toFixed(5);}
+      const dir=cardinal(state.position.heading),msg="Localização confirmada: "+state.address+". Precisão aproximada: "+distanceText(state.position.accuracy)+". Direção: "+dir+".";
       set("estado-gps",msg);speak(msg);
-    },e=>{const m=geoError(e);set("estado-gps",m);diag(m);},{enableHighAccuracy:true,timeout:30000,maximumAge:0});
+    };
+    state.calibrationWatch=navigator.geolocation.watchPosition(p=>{
+      count++;if(!best||p.coords.accuracy<best.coords.accuracy)best=p;
+      set("estado-gps","A calibrar. Melhor precisão até agora: "+distanceText(best.coords.accuracy)+".");
+      if(best.coords.accuracy<=25 || count>=8 || Date.now()-started>20000)finish();
+    },e=>{if(state.calibrationWatch!==null)navigator.geolocation.clearWatch(state.calibrationWatch);state.calibrationWatch=null;const m=geoError(e);set("estado-gps",m);speak(m);diag(m);},{enableHighAccuracy:true,timeout:30000,maximumAge:0});
+    setTimeout(finish,22000);
   }
   async function getOrigin(){
     const q=$("partida").value.trim();if(q)return await geocode(q);
@@ -136,15 +171,24 @@
     while(next<steps.length-1&&steps[next].location&&haversine(pos,steps[next].location)<12){state.guideStep=next;state.announced.clear();speak(steps[next].text+". Depois segue durante "+distanceText(steps[next].distance)+".");next++;}
     const target=steps[next];if(!target||!target.location)return;
     const d=haversine(pos,target.location),accuracy=state.position.accuracy||0;
-    const thresholds=[100,50,20];
+    const thresholds=[150,100,50,25,10];
     for(const t of thresholds){const key=next+":"+t;if(d<=t+Math.min(accuracy,15)&&!state.announced.has(key)){state.announced.add(key);speak("Daqui a cerca de "+distanceText(d)+", "+target.text.toLowerCase()+".");break;}}
-    setGuideStatus("Guia ativo. Próxima indicação: "+target.text+" dentro de aproximadamente "+distanceText(d)+". Destino a "+distanceText(destDistance)+".");
-    const off=distanceToRoute(pos),limit=Math.max(45,accuracy*1.8);
+    const dir=cardinal(state.position.heading);
+    setGuideStatus("Guia ativo. Segues para "+dir+". Próxima indicação: "+target.text+" dentro de aproximadamente "+distanceText(d)+". Destino a "+distanceText(destDistance)+". Precisão GPS "+distanceText(accuracy)+".");
+    const now=Date.now();
+    if(!state.lastProgressPosition)state.lastProgressPosition={...pos};
+    const moved=haversine(state.lastProgressPosition,pos);
+    if(moved>=30 && now-state.lastProgressSpeech>=14000){
+      state.lastProgressPosition={...pos};state.lastProgressSpeech=now;
+      speak("Segues para "+dir+". Próxima indicação dentro de cerca de "+distanceText(d)+". Destino a "+distanceText(destDistance)+".",{interrupt:false});
+    }
+    const off=distanceToRoute(pos),limit=Math.max(35,accuracy*1.6);
     if(off>limit)state.offRouteCount++;else state.offRouteCount=0;
     if(state.offRouteCount>=3){state.offRouteCount=0;const now=Date.now();speak("Parece que saíste do percurso. Vou tentar recalcular a partir da localização atual.");if(now-state.lastReroute>30000){state.lastReroute=now;recalculateFromHere();}}
   }
   async function guidePosition(p){
-    updatePosition(p);const pos={lat:state.position.lat,lon:state.position.lon};
+    if(!acceptPosition(p)){setGuideStatus("Guia ativo, mas esta leitura GPS foi rejeitada por falta de precisão.");return;}
+    const pos={lat:state.position.lat,lon:state.position.lon};
     if(Date.now()-state.lastReverseAt>60000){state.lastReverseAt=Date.now();reverse(pos.lat,pos.lon).then(a=>{state.address=a;set("estado-gps","Localização durante o guia: "+a+". Precisão aproximada: "+distanceText(state.position.accuracy)+".");}).catch(()=>{});}
     announceNext(pos);
   }
@@ -152,7 +196,8 @@
     if(!state.route){speak("Primeiro calcula um percurso.");return;}
     if(!navigator.geolocation){speak("Este navegador não suporta localização contínua.");return;}
     if(state.guideActive)return;
-    state.guideActive=true;state.announced.clear();state.offRouteCount=0;
+    if(!state.position||state.position.accuracy>80){speak("Primeiro usa o botão obter localização e espera pela confirmação de GPS seguro.");return;}
+    state.guideActive=true;state.announced.clear();state.offRouteCount=0;state.lastProgressPosition=null;state.lastProgressSpeech=0;
     if(state.position)state.guideStep=nearestStepIndex(state.position);else state.guideStep=0;
     $("iniciar-guia").disabled=true;$("parar-guia").disabled=false;$("recalcular-guia").disabled=false;$("estado-guia-falado").disabled=false;
     requestWakeLock();
