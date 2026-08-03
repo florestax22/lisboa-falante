@@ -97,24 +97,39 @@
   }
   function locate(){
     if(!navigator.geolocation){set("estado-gps","Este navegador não suporta localização.");return;}
+    if(!window.isSecureContext){const m="O GPS preciso exige uma ligação HTTPS segura. Abre o endereço oficial começado por https.";set("estado-gps",m);speak(m);return;}
     if(state.calibrationWatch!==null)navigator.geolocation.clearWatch(state.calibrationWatch);
-    set("estado-gps","A calibrar o GPS. Mantém-te no exterior e espera por uma leitura precisa.");
-    speak("A calibrar o GPS. Não vou aceitar uma localização imprecisa.");
-    let best=null,count=0,finished=false;const started=Date.now();
+    state.position=null; state.lastGoodPosition=null;
+    set("estado-gps","A procurar GPS real. A primeira leitura pode vir da rede e estar errada. Mantém o telemóvel no exterior, com o ecrã ligado, até a precisão melhorar.");
+    speak("A procurar GPS real. Não vou usar uma localização aproximada da rede.");
+    let best=null,finished=false,lastSpokenBand="";const started=Date.now();
     const finish=async()=>{
-      if(finished)return;finished=true;if(state.calibrationWatch!==null)navigator.geolocation.clearWatch(state.calibrationWatch);state.calibrationWatch=null;
-      if(!best||best.coords.accuracy>100){const m="Não obtive GPS seguro. A melhor precisão foi "+(best?distanceText(best.coords.accuracy):"desconhecida")+". Vai para o exterior, ativa a localização precisa e tenta novamente.";set("estado-gps",m);speak(m);return;}
-      acceptPosition(best,{calibration:true});
+      if(finished)return;finished=true;
+      if(state.calibrationWatch!==null)navigator.geolocation.clearWatch(state.calibrationWatch);state.calibrationWatch=null;
+      if(!best||best.coords.accuracy>60){
+        const got=best?distanceText(best.coords.accuracy):"nenhuma leitura";
+        const m="GPS preciso não obtido. A melhor leitura foi "+got+". Essa posição não será usada. No iPhone ativa Localização exata para o navegador. No Android ativa Usar localização precisa. Depois volta ao exterior e tenta novamente.";
+        set("estado-gps",m);speak(m);diag(m);return;
+      }
+      if(!acceptPosition(best,{calibration:true})){const m="A melhor leitura ainda não passou na validação de segurança. Tenta novamente no exterior.";set("estado-gps",m);speak(m);return;}
       try{state.address=await reverse(state.position.lat,state.position.lon);}catch(e){state.address="coordenadas "+state.position.lat.toFixed(5)+", "+state.position.lon.toFixed(5);}
-      const dir=cardinal(state.position.heading),msg="Localização confirmada: "+state.address+". Precisão aproximada: "+distanceText(state.position.accuracy)+". Direção: "+dir+".";
+      const dir=cardinal(state.position.heading),msg="GPS confirmado: "+state.address+". Precisão aproximada: "+distanceText(state.position.accuracy)+". Direção: "+dir+".";
       set("estado-gps",msg);speak(msg);
     };
     state.calibrationWatch=navigator.geolocation.watchPosition(p=>{
-      count++;if(!best||p.coords.accuracy<best.coords.accuracy)best=p;
-      set("estado-gps","A calibrar. Melhor precisão até agora: "+distanceText(best.coords.accuracy)+".");
-      if(best.coords.accuracy<=25 || count>=8 || Date.now()-started>20000)finish();
-    },e=>{if(state.calibrationWatch!==null)navigator.geolocation.clearWatch(state.calibrationWatch);state.calibrationWatch=null;const m=geoError(e);set("estado-gps",m);speak(m);diag(m);},{enableHighAccuracy:true,timeout:30000,maximumAge:0});
-    setTimeout(finish,22000);
+      const a=Math.round(Number(p.coords.accuracy)||9999);
+      if(!best||a<best.coords.accuracy)best=p;
+      let status;
+      if(a>1000)status="Recebi apenas localização aproximada da rede, com erro de cerca de "+distanceText(a)+". Continuo à espera do GPS real.";
+      else if(a>200)status="A localização ainda é demasiado imprecisa: "+distanceText(a)+". Continuo à espera.";
+      else if(a>60)status="O GPS está a melhorar. Precisão atual: "+distanceText(a)+". Ainda não será usada.";
+      else status="GPS utilizável encontrado, com precisão aproximada de "+distanceText(a)+".";
+      set("estado-gps",status+" Melhor leitura: "+distanceText(best.coords.accuracy)+".");
+      const band=a>1000?"rede":a>200?"fraca":a>60?"melhorar":"boa";
+      if(band!==lastSpokenBand){lastSpokenBand=band;speak(status,{interrupt:false});}
+      if(best.coords.accuracy<=25)finish();
+    },e=>{if(state.calibrationWatch!==null)navigator.geolocation.clearWatch(state.calibrationWatch);state.calibrationWatch=null;const m=geoError(e);set("estado-gps",m);speak(m);diag(m);},{enableHighAccuracy:true,timeout:95000,maximumAge:0});
+    setTimeout(finish,90000);
   }
   async function getOrigin(){
     const q=$("partida").value.trim();if(q)return await geocode(q);
@@ -218,42 +233,116 @@
     if(ok){state.guideStep=nearestStepIndex(state.position);state.announced.clear();setGuideStatus("Novo percurso calculado. O guia continua ativo.",true);}
   }
 
-  function overpassFilter(q){
+  function searchCategory(q){
     const n=q.toLowerCase();
-    if(n.includes("passadeira"))return '[highway="crossing"]';
-    if(n.includes("obra"))return '[highway="construction"]';
-    if(n.includes("farm"))return '[amenity="pharmacy"]';
-    if(n.includes("super")||n.includes("mercado")||n.includes("mercearia"))return '[shop~"supermarket|convenience|grocery"]';
-    if(n.includes("tasca")||n.includes("café")||n.includes("cafe")||n.includes("bar"))return '[amenity~"cafe|bar|pub"]';
-    if(n.includes("comida rápida")||n.includes("comida rapida")||n.includes("fast food")||n.includes("mcdonald")||n.includes("burger"))return '[amenity="fast_food"]';
-    if(n.includes("restaurante"))return '[amenity="restaurant"]';
-    if(n.includes("hotel")||n.includes("pensão")||n.includes("pensao")||n.includes("residencial")||n.includes("alojamento"))return '[tourism~"hotel|hostel|guest_house|motel"]';
-    if(n.includes("táxi")||n.includes("taxi"))return '[amenity="taxi"]';
-    if(n.includes("multibanco")||n.includes("atm"))return '[amenity="atm"]';
-    if(n.includes("hospital")||n.includes("urgência")||n.includes("urgencia"))return '[amenity="hospital"]';
-    if(n.includes("polícia")||n.includes("policia"))return '[amenity="police"]';
-    if(n.includes("bombeiro"))return '[amenity="fire_station"]';
-    if(n.includes("casa de banho")||n.includes("sanitário")||n.includes("sanitario"))return '[amenity="toilets"]';
-    if(n.includes("autocarro")||n.includes("paragem"))return '[highway="bus_stop"]';
-    if(n.includes("comboio")||n.includes("estação")||n.includes("estacao"))return '[railway="station"]';
+    if(n.includes("passadeira"))return "crossings";
+    if(n.includes("obra"))return "works";
+    if(n.includes("farm"))return "pharmacy";
+    if(n.includes("centro de saúde")||n.includes("centros de saúde")||n.includes("hospital")||n.includes("urgência")||n.includes("urgencia")||n.includes("saúde")||n.includes("saude"))return "health";
+    if(n.includes("tasca")||n.includes("restaurante")||n.includes("café")||n.includes("cafe")||n.includes("bar")||n.includes("ementa"))return "food";
+    if(n.includes("comida rápida")||n.includes("comida rapida")||n.includes("fast food")||n.includes("mcdonald")||n.includes("burger"))return "fastfood";
+    if(n.includes("super")||n.includes("mercado")||n.includes("mercearia"))return "shops";
+    if(n.includes("hotel")||n.includes("pensão")||n.includes("pensao")||n.includes("residencial")||n.includes("alojamento"))return "lodging";
+    if(n.includes("táxi")||n.includes("taxi"))return "taxi";
+    if(n.includes("polícia")||n.includes("policia"))return "police";
+    if(n.includes("bombeiro"))return "fire";
+    if(n.includes("casa de banho")||n.includes("sanitário")||n.includes("sanitario"))return "toilets";
+    if(n.includes("autocarro")||n.includes("paragem"))return "bus";
+    if(n.includes("comboio")||n.includes("estação")||n.includes("estacao"))return "rail";
+    return "name";
+  }
+  function overpassFilter(q){
+    const c=searchCategory(q);
+    if(c==="crossings")return '[highway="crossing"]';
+    if(c==="works")return '[highway="construction"]';
+    if(c==="pharmacy")return '[amenity="pharmacy"]';
+    if(c==="health")return '[amenity~"hospital|clinic|doctors|health_post"]';
+    if(c==="food")return '[amenity~"restaurant|cafe|bar|pub"]';
+    if(c==="fastfood")return '[amenity="fast_food"]';
+    if(c==="shops")return '[shop~"supermarket|convenience|grocery"]';
+    if(c==="lodging")return '[tourism~"hotel|hostel|guest_house|motel|apartment"]';
+    if(c==="taxi")return '[amenity="taxi"]';
+    if(c==="police")return '[amenity="police"]';
+    if(c==="fire")return '[amenity="fire_station"]';
+    if(c==="toilets")return '[amenity="toilets"]';
+    if(c==="bus")return '[highway="bus_stop"]';
+    if(c==="rail")return '[railway="station"]';
     return '[name~"'+q.replace(/["\\]/g," ")+'",i]';
+  }
+  function radiusFor(category){
+    if(category==="crossings")return 1500;
+    if(category==="health")return 15000;
+    if(category==="food"||category==="fastfood")return 7000;
+    return 6000;
+  }
+  function safeUrl(value){
+    const s=String(value||"").trim();
+    return /^https?:\/\//i.test(s)?s:"";
+  }
+  function municipalFallback(category){
+    if(category==="food")return [{
+      name:"A Carruagem",addr:"Rua Afonso de Albuquerque, 14, 2625-102 Póvoa de Santa Iria",lat:38.86016612067767,lon:-9.063007235527039,
+      phone:"963 479 335",website:"https://www.cm-vfxira.pt/saber-lazer/informacao-turistica/gastronomia-e-encostas-de-xira/onde-comer/poi/a-carruagem",menu:"",hours:"Encerra ao domingo",cuisine:"cozinha tradicional portuguesa",source:"Município de Vila Franca de Xira"
+    }];
+    return [];
+  }
+  async function healthFallback(){
+    const records=[
+      {name:"Unidade de Saúde de Vila Franca de Xira",addr:"Rua António Lúcio Batista, 6, 2600-102 Vila Franca de Xira",phone:"263 279 674",source:"Município de Vila Franca de Xira"},
+      {name:"Unidade de Cuidados de Saúde Personalizados Castanheira do Ribatejo",addr:"Rua Dr. José Azeredo Perdigão, 2600-645 Castanheira do Ribatejo",phone:"263 286 100",source:"Município de Vila Franca de Xira"},
+      {name:"Hospital de Vila Franca de Xira",addr:"Estrada Carlos Lima Costa, 2, 2600-009 Vila Franca de Xira",phone:"263 006 500",source:"Município de Vila Franca de Xira"}
+    ];
+    const out=[];
+    for(const r of records){
+      try{const g=await geocode(r.addr);out.push({...r,lat:g.lat,lon:g.lon,website:"",menu:"",hours:"",cuisine:""});}catch(e){}
+    }
+    return out;
+  }
+  function uniquePlaces(items){
+    const seen=new Set();
+    return items.filter(x=>{
+      const key=(x.name+"|"+x.lat.toFixed(4)+"|"+x.lon.toFixed(4)).toLowerCase();
+      if(seen.has(key))return false;seen.add(key);return true;
+    });
   }
   async function searchNearby(){
     const q=$("pesquisa").value.trim();if(!q){set("estado-pesquisa","Escreve o que procuras.");speak("Escreve o que procuras.");return;}if(!state.position){set("estado-pesquisa","Primeiro obtém a localização atual.");speak("Primeiro obtém a localização atual.");return;}
-    set("estado-pesquisa","A procurar "+q+" perto de ti.");$("resultado-pesquisa").innerHTML="";
-    const f=overpassFilter(q),lat=state.position.lat,lon=state.position.lon;
-    const radius=q.toLowerCase().includes("passadeira")?1200:4000;
-    const query='[out:json][timeout:25];(node(around:'+radius+','+lat+','+lon+')'+f+';way(around:'+radius+','+lat+','+lon+')'+f+';relation(around:'+radius+','+lat+','+lon+')'+f+';);out center tags 40;';
+    set("estado-pesquisa","A procurar "+q+" perto de ti, em várias categorias de dados.");$("resultado-pesquisa").innerHTML="";
+    const category=searchCategory(q),f=overpassFilter(q),lat=state.position.lat,lon=state.position.lon,radius=radiusFor(category);
+    let selectors=[];
+    if(category==="health")selectors=['[amenity~"hospital|clinic|doctors|health_post"]','[healthcare~"hospital|clinic|doctor|centre|health_post"]'];
+    else selectors=[f];
+    const parts=[];
+    for(const sel of selectors){parts.push('node(around:'+radius+','+lat+','+lon+')'+sel+';','way(around:'+radius+','+lat+','+lon+')'+sel+';','relation(around:'+radius+','+lat+','+lon+')'+sel+';');}
+    const query='[out:json][timeout:35];('+parts.join('')+');out center tags 100;';
     try{
-      const j=await fetchJson("https://overpass-api.de/api/interpreter",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body:"data="+encodeURIComponent(query)},35000);
-      const items=(j.elements||[]).map(x=>{const p=x.center||x,t=x.tags||{};if(!p.lat||!p.lon)return null;const generic=q.toLowerCase().includes("passadeira")?"Passadeira":q.toLowerCase().includes("obra")?"Via assinalada em obras":q;const name=t.name||t.brand||generic,addr=[t["addr:street"],t["addr:housenumber"],t["addr:city"]].filter(Boolean).join(" "),dist=haversine({lat,lon},{lat:Number(p.lat),lon:Number(p.lon)}),dir=cardinal(bearing({lat,lon},{lat:Number(p.lat),lon:Number(p.lon)})),phone=t.phone||t["contact:phone"]||"";return{name,addr,dist,dir,phone,lat:Number(p.lat),lon:Number(p.lon)};}).filter(Boolean).sort((a,b)=>a.dist-b.dist).slice(0,12);
-      if(!items.length)throw new Error("Não encontrei registos num raio de "+distanceText(radius)+".");
-      const sentence=(x,i)=>(i+1)+": "+x.name+", a cerca de "+distanceText(x.dist)+", na direção "+x.dir+(x.addr?", em "+x.addr:"")+(x.phone?". Telefone "+x.phone:"")+".";
+      let elements=[];
+      try{
+        const j=await fetchJson("https://overpass-api.de/api/interpreter",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body:"data="+encodeURIComponent(query)},45000);
+        elements=j.elements||[];
+      }catch(primaryError){
+        const j=await fetchJson("https://overpass.kumi.systems/api/interpreter",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body:"data="+encodeURIComponent(query)},45000);
+        elements=j.elements||[];
+      }
+      let items=elements.map(x=>{const p=x.center||x,t=x.tags||{};if(!p.lat||!p.lon)return null;const generic=category==="crossings"?"Passadeira":category==="works"?"Via assinalada em obras":q;const name=t.name||t.brand||t.operator||generic,addr=[t["addr:street"],t["addr:housenumber"],t["addr:postcode"],t["addr:city"]].filter(Boolean).join(" "),dist=haversine({lat,lon},{lat:Number(p.lat),lon:Number(p.lon)}),dir=cardinal(bearing({lat,lon},{lat:Number(p.lat),lon:Number(p.lon)})),phone=t.phone||t["contact:phone"]||"",website=safeUrl(t.website||t["contact:website"]),menu=safeUrl(t["website:menu"]||t.menu||t["contact:menu"]),hours=t.opening_hours||"",cuisine=(t.cuisine||"").replace(/;/g,", "),source="OpenStreetMap";return{name,addr,dist,dir,phone,lat:Number(p.lat),lon:Number(p.lon),website,menu,hours,cuisine,source};}).filter(Boolean);
+      let extra=municipalFallback(category);
+      if(category==="health")extra=extra.concat(await healthFallback());
+      for(const x of extra){x.dist=haversine({lat,lon},x);x.dir=cardinal(bearing({lat,lon},x));}
+      items=uniquePlaces(items.concat(extra)).filter(x=>x.dist<=radius*1.4);
+      items.sort((a,b)=>{
+        if(category==="food"){
+          const pa=(a.menu?0:a.website?1:2),pb=(b.menu?0:b.website?1:2);if(pa!==pb)return pa-pb;
+        }
+        return a.dist-b.dist;
+      });
+      items=items.slice(0,20);
+      if(!items.length)throw new Error("Não encontrei registos num raio de "+distanceText(radius)+". Isto pode significar falta de dados públicos, não ausência real do serviço.");
+      const sentence=(x,i)=>(i+1)+": "+x.name+", a cerca de "+distanceText(x.dist)+", na direção "+x.dir+(x.addr?", em "+x.addr:"")+(x.cuisine?". Tipo de comida: "+x.cuisine:"")+(x.hours?". Horário publicado: "+x.hours:"")+(x.menu?". Tem ligação para ementa online":"")+(x.phone?". Telefone "+x.phone:"")+". Fonte: "+x.source+".";
       state.searchText="Resultados para "+q+". "+items.map(sentence).join(" ");
-      $("resultado-pesquisa").innerHTML=items.map((x,i)=>"<article><h3>"+esc((i+1)+". "+x.name)+"</h3><p>"+esc((x.addr?x.addr+". ":"")+"Distância aproximada: "+distanceText(x.dist)+". Direção: "+x.dir+".")+"</p>"+(x.phone?"<a class=\"telefone-resultado\" href=\"tel:"+esc(x.phone.replace(/[^+\d]/g,""))+"\">Ligar para "+esc(x.phone)+"</a>":"")+"<button type=\"button\" class=\"ouvir-resultado\" data-resultado=\""+i+"\">Narrativa falada deste resultado</button><button type=\"button\" class=\"ir-resultado\" data-resultado=\""+i+"\">Usar como destino</button></article>").join("");
+      $("resultado-pesquisa").innerHTML=items.map((x,i)=>"<article><h3>"+esc((i+1)+". "+x.name)+"</h3><p>"+esc((x.addr?x.addr+". ":"")+"Distância aproximada: "+distanceText(x.dist)+". Direção: "+x.dir+"."+(x.cuisine?" Tipo de comida: "+x.cuisine+".":"")+(x.hours?" Horário publicado: "+x.hours+".":"")+" Fonte: "+x.source+".")+"</p>"+(x.phone?"<a class=\"telefone-resultado\" href=\"tel:"+esc(x.phone.replace(/[^+\d]/g,""))+"\">Ligar para "+esc(x.phone)+"</a>":"")+(x.menu?"<a class=\"telefone-resultado\" target=\"_blank\" rel=\"noopener\" href=\""+esc(x.menu)+"\">Abrir ementa online</a>":"")+(x.website?"<a class=\"telefone-resultado\" target=\"_blank\" rel=\"noopener\" href=\""+esc(x.website)+"\">Abrir página oficial</a>":"")+"<button type=\"button\" class=\"ouvir-resultado\" data-resultado=\""+i+"\">Narrativa falada deste resultado</button><button type=\"button\" class=\"ir-resultado\" data-resultado=\""+i+"\">Usar como destino</button></article>").join("");
       document.querySelectorAll(".ouvir-resultado").forEach(b=>b.onclick=()=>speak(sentence(items[Number(b.dataset.resultado)],Number(b.dataset.resultado))));
       document.querySelectorAll(".ir-resultado").forEach(b=>b.onclick=()=>{const x=items[Number(b.dataset.resultado)];$("destino").value=x.lat+","+x.lon;speak(x.name+" ficou definido como destino. Vou calcular o percurso.");calculate();});
-      set("estado-pesquisa",items.length+" resultados encontrados. Podes ouvir cada resultado ou usá-lo como destino.");$("resultado-pesquisa").focus();
+      set("estado-pesquisa",items.length+" resultados encontrados. Resultados com ementa online aparecem primeiro quando essa informação existe.");$("resultado-pesquisa").focus();
     }catch(e){const m="Não consegui procurar: "+e.message;set("estado-pesquisa",m);speak(m);diag("Pesquisa: "+e.message);}
   }
   function speakField(id,label){const value=$(id).value.trim();speak(label+". "+(value?"Conteúdo: "+value+".":"O campo está vazio."));}
