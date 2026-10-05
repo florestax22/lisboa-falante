@@ -1,6 +1,8 @@
 name: Publicar Lisboa Falante em HTTPS
 
 on:
+  schedule:
+    - cron: "25 5 * * *"
   push:
     branches: ["main"]
   workflow_dispatch:
@@ -25,15 +27,8 @@ jobs:
       - name: Obter ficheiros do repositório
         uses: actions/checkout@v6
 
-      - name: Confirmar que a chave foi configurada
-        shell: bash
-        env:
-          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
-        run: |
-          if [ -z "$GOOGLE_MAPS_API_KEY" ]; then
-            echo "ERRO: falta o secret GOOGLE_MAPS_API_KEY."
-            exit 1
-          fi
+      - name: Atualizar dados oficiais da Carris
+        run: python3 scripts/atualizar_carris.py
 
       - name: Criar configuração para o site publicado
         shell: bash
@@ -42,6 +37,7 @@ jobs:
         run: |
           mkdir -p site
           cp index.html app.js style.css .nojekyll site/
+          cp -R data site/
           printf 'window.LISBOA_FALANTE_CONFIG = {\n  GOOGLE_MAPS_API_KEY: "%s"\n};\n' "$GOOGLE_MAPS_API_KEY" > site/config.js
 
       - name: Configurar GitHub Pages

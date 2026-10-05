@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#174a5c">
 <meta name="description" content="Lisboa Falante: orientação acessível por GPS, pesquisa de serviços próximos, percursos narrados e guia por voz em tempo real.">
-<title>Lisboa Falante — A cidade também se ouve — versão 16.4</title>
-<link rel="stylesheet" href="style.css?v=16.4">
+<title>Lisboa Falante — A cidade também se ouve — versão 17.0</title>
+<link rel="stylesheet" href="style.css?v=17.0">
 </head>
 <body>
 <a class="skip" href="#principal">Saltar para o conteúdo principal</a>
@@ -19,12 +19,12 @@
       <p class="lema">A cidade também se ouve.</p>
     </div>
   </div>
-  <p class="apresentacao">Orientação falada, localização, serviços próximos e apoio à deslocação para pessoas cegas, com baixa visão e para qualquer pessoa que precise de instruções claras.</p>
+  <p class="apresentacao">Orientação falada, localização, serviços próximos e apoio à deslocação para pessoas cegas, com baixa visão, pessoas em cadeira de rodas, pessoas idosas e qualquer pessoa que precise de orientação. Menus de texto, leitura por teclado e informações faladas opcionais.</p>
 </header>
 
 <nav class="atalhos" aria-label="Atalhos principais">
   <a href="#localizacao">Localização</a>
-  <a href="#voz">Voz</a>
+  <a href="#voz">Voz</a><a href="#demonstracao">Demonstração fictícia</a><a href="#carris">Carris</a><a href="#envolvente">Partida e chegada</a>
   <a href="#percurso">Percurso</a>
   <a href="#guia">Guia em tempo real</a>
   <a href="#proximidade">Perto de mim</a>
@@ -32,15 +32,16 @@
   <a href="#telefones">Telefones úteis</a>
 </nav>
 
-<main id="principal">
-<p id="estado-geral" class="estado destaque-estado" role="status" aria-live="assertive">Aplicação pronta. Autoriza a localização quando o navegador pedir.</p>
+<main id="principal" tabindex="-1">
+<p id="estado-geral" class="estado destaque-estado" role="status" aria-live="polite">Aplicação pronta. Autoriza a localização quando o navegador pedir.</p>
 
 <section id="localizacao" aria-labelledby="titulo-localizacao">
 <h2 id="titulo-localizacao"><span class="numero">1</span> Localização atual</h2>
-<p class="ajuda">Usa o GPS real do dispositivo. A aplicação espera até 90 segundos, rejeita localizações aproximadas da rede e nunca usa leituras com erro superior a 60 metros. No iPhone ativa Localização exata; no Android ativa localização precisa.</p>
+<p class="ajuda">Pede a melhor precisão disponível e mostra a margem de erro. No PC a posição pode ser aproximada, por falta de GPS. Não identifica o lado do passeio nem confirma uma passadeira. Podes escrever uma morada como partida; isso não confirma onde estás. No telemóvel, ativa a localização precisa.</p>
 <button id="obter-localizacao" class="principal">Obter localização agora</button>
+<button id="ativar-bussola">Ativar bússola, se o dispositivo permitir</button><p id="estado-bussola" role="status">Orientação do dispositivo desconhecida. A direção do movimento é uma informação diferente.</p><button id="partilhar-posicao">Preparar localização para pedir ajuda</button><div id="pedido-ajuda" tabindex="-1"></div>
 <button id="ouvir-localizacao">Narrativa falada da localização</button>
-<p id="estado-gps" class="estado" role="status" aria-live="assertive">Ainda sem localização.</p>
+<p id="estado-gps" class="estado" role="status" aria-live="polite">Ainda sem localização.</p>
 </section>
 
 <section id="voz" aria-labelledby="titulo-voz">
@@ -48,7 +49,8 @@
 <fieldset>
 <legend>Que voz queres ouvir?</legend>
 <label><input type="radio" name="tipo-voz" value="aplicacao" checked> Voz da aplicação. Procura primeiro a Raquel e depois outra voz portuguesa.</label>
-<label><input type="radio" name="tipo-voz" value="dispositivo"> Voz do dispositivo. Usa a voz predefinida do iPhone, Android ou computador.</label>
+<label><input type="radio" name="tipo-voz" value="dispositivo"> Voz predefinida disponível no navegador do dispositivo.</label>
+<label><input type="radio" name="tipo-voz" value="nenhuma"> Sem voz da aplicação. Mantém a leitura pelo teu leitor de ecrã.</label>
 </fieldset>
 <button id="guardar-voz" class="principal">Guardar opção de voz</button>
 <button id="testar-voz">Testar a voz escolhida</button>
@@ -70,7 +72,10 @@
 <fieldset><legend>Modo de deslocação</legend>
 <label><input type="radio" name="modo" value="pedestrian" checked> A pé</label>
 <label><input type="radio" name="modo" value="bicycle"> Bicicleta</label>
-<label><input type="radio" name="modo" value="auto"> Automóvel ou táxi</label>
+<label><input type="radio" name="modo" value="auto"> Automóvel particular</label>
+<label><input type="radio" name="modo" value="taxi"> Táxi</label>
+<label><input type="radio" name="modo" value="wheelchair"> Cadeira de rodas, com acessibilidade por confirmar</label>
+<label><input type="radio" name="modo" value="transit"> Transportes públicos</label>
 </fieldset>
 <button id="calcular" class="principal">Calcular percurso</button>
 <button id="ouvir-percurso">Narrativa falada do percurso</button>
@@ -78,6 +83,32 @@
 <div id="resultado-percurso" class="resultado" tabindex="-1"></div>
 </section>
 
+<section id="envolvente" aria-labelledby="titulo-envolvente">
+<h2 id="titulo-envolvente">Serviços na partida e na chegada</h2>
+<p>Consulta passadeiras, passeios registados, ciclovias, táxis, instituições públicas, saúde, bombeiros e apoio social num raio de 700 metros. As distâncias são em linha reta. Falta de registos não significa ausência no local.</p>
+<button id="envolvente-partida">Consultar a área da partida</button><button id="envolvente-chegada">Consultar a área da chegada</button>
+<p id="estado-envolvente" role="status"></p><div id="resultado-envolvente" tabindex="-1"></div>
+</section>
+<section id="carris" aria-labelledby="titulo-carris">
+<h2 id="titulo-carris">Carris: paragens e sequência do autocarro</h2>
+<p>Dados do operador apresentados nesta aplicação. Escolhe a carreira e o sentido; podem existir variantes. A lista é um percurso previsto, sem previsão de chegada em tempo real.</p>
+<button id="carris-proximas">Consultar paragens Carris próximas</button>
+<label for="carreira-carris">Número da carreira</label><input id="carreira-carris" inputmode="text" placeholder="Exemplo: 736">
+<button id="carregar-carreira">Consultar sentidos e variantes</button>
+<label for="sentido-carris">Sentido e variante</label><select id="sentido-carris"><option value="">Escolhe primeiro uma carreira</option></select>
+<label for="embarque-carris">Paragem de entrada</label><select id="embarque-carris"><option value="">Escolhe primeiro o sentido</option></select>
+<button id="mostrar-paragens">Ler todas as paragens a partir da entrada</button>
+<button id="carris-anterior" disabled>Paragem anterior</button><button id="carris-seguinte" disabled>Paragem seguinte</button>
+<p id="estado-carris" role="status"></p><div id="resultado-carris" tabindex="-1"></div>
+<a href="https://www.carris.pt/viaje/carreiras/">Confirmar percursos e alterações no site da Carris</a>
+</section>
+<section id="demonstracao" aria-labelledby="titulo-demonstracao">
+<h2 id="titulo-demonstracao">Demonstração fictícia de um percurso completo</h2>
+<p>Simulação para conhecer as funções. Lugares, distâncias, paragens e condições deste exemplo são inventados. Não uses estas instruções na rua. Não muda a tua localização nem o teu percurso real.</p>
+<label for="modo-demo">Modo da demonstração</label><select id="modo-demo"><option value="pedestrian">A pé</option><option value="transit">Autocarro</option><option value="wheelchair">Cadeira de rodas</option><option value="taxi">Táxi</option><option value="auto">Automóvel particular</option><option value="bicycle">Bicicleta</option></select>
+<button id="iniciar-demo">Iniciar demonstração</button><button id="demo-anterior" disabled>Passo anterior da demonstração</button><button id="demo-seguinte" disabled>Próximo passo da demonstração</button><button id="ouvir-demo">Ouvir o passo atual</button><button id="terminar-demo">Terminar demonstração</button>
+<p id="estado-demo" role="status"></p><div id="resultado-demo" tabindex="-1"></div>
+</section>
 <section id="guia" aria-labelledby="titulo-guia">
 <h2 id="titulo-guia"><span class="numero">4</span> Guia por voz em tempo real</h2>
 <p class="ajuda">Primeiro confirma uma localização com boa precisão e calcula o percurso. Depois inicia o guia, mantém o navegador aberto e o ecrã ativo.</p>
@@ -85,7 +116,7 @@
 <button id="estado-guia-falado" disabled>Ouvir estado atual do guia</button>
 <button id="recalcular-guia" disabled>Recalcular desde a localização atual</button>
 <button id="parar-guia" disabled>Parar guia em tempo real</button>
-<p id="estado-guia" class="estado" role="status" aria-live="assertive">Guia parado. Calcula primeiro um percurso.</p>
+<p id="estado-guia" class="estado" role="status" aria-live="polite">Guia parado. Calcula primeiro um percurso.</p>
 </section>
 
 <section id="proximidade" aria-labelledby="titulo-proximidade">
@@ -114,6 +145,7 @@
 <button type="button" class="pesquisa-rapida" data-query="praças de táxis">Praças de táxis</button>
 <button type="button" class="pesquisa-rapida" data-query="farmácias">Farmácias</button>
 <button type="button" class="pesquisa-rapida" data-query="centros de saúde hospitais urgências">Centros de saúde, hospitais e urgências</button>
+<button type="button" class="pesquisa-rapida" data-query="ciclovias">Ciclovias</button><button type="button" class="pesquisa-rapida" data-query="instituições públicas">Instituições públicas</button><button type="button" class="pesquisa-rapida" data-query="apoio social">Apoio social e a pessoas idosas</button><button type="button" class="pesquisa-rapida" data-query="Cruz Vermelha">Cruz Vermelha</button>
 <button type="button" class="pesquisa-rapida" data-query="polícia">Polícia</button>
 <button type="button" class="pesquisa-rapida" data-query="bombeiros">Bombeiros</button>
 <button type="button" class="pesquisa-rapida" data-query="casas de banho públicas">Casas de banho públicas</button>
@@ -124,13 +156,14 @@
 
 <section id="telefones" aria-labelledby="titulo-telefones">
 <h2 id="titulo-telefones"><span class="numero">7</span> Telefones úteis</h2>
-<p class="ajuda">Os botões abrem a chamada no telemóvel. Em emergência real, usa o 112.</p>
+<p class="ajuda">Os links pedem ao dispositivo para abrir uma chamada; no PC é necessário um programa de chamadas. As chamadas usam o serviço telefónico disponível. A aplicação não faz chamadas pela Internet nem consegue escolher dados móveis em vez de Wi-Fi. A consulta online usa a ligação escolhida pelo dispositivo. Em emergência real, usa o 112.</p>
 <div class="grade-botoes">
 <a class="ligacao emergencia" href="tel:112">Ligar 112 — emergência</a>
 <a class="ligacao" href="tel:808242424">Ligar SNS 24 — 808 24 24 24</a>
 <a class="ligacao" href="tel:800250250">Ligar CIAV — intoxicações — 800 250 250</a>
 <a class="ligacao" href="tel:213913900">Ligar Cruz Vermelha Portuguesa — 213 913 900</a>
 </div>
+<p>Contactos conferidos em fontes oficiais em 5 de outubro de 2026. Consulta a fonte para alterações posteriores.</p><div id="contactos-adicionais"></div>
 <button id="ouvir-telefones">Ouvir os telefones úteis</button>
 <p class="nota-dados">Para polícia, bombeiros ou emergência médica urgente, o número nacional é 112. Os contactos locais encontrados pela pesquisa podem estar incompletos.</p>
 </section>
@@ -147,8 +180,9 @@
 <footer>
   <p><strong>Lisboa Falante</strong> — A cidade também se ouve.</p>
   <p class="desenvolvimento" role="note">Projeto em desenvolvimento e em fase de testes. Os percursos e resultados devem ser confirmados no local.</p>
-  <p class="creditos">Dados geográficos baseados em OpenStreetMap. Versão 16.4 — cobertura reforçada de saúde e restauração, com fontes municipais e ementas online quando publicadas.</p>
+  <p class="creditos">Dados geográficos baseados em OpenStreetMap. Versão 17.0 — Carris, demonstração acessível e serviços na partida e chegada. Dados e acessibilidade sujeitos a confirmação.</p>
 </footer>
-<script src="app.js?v=16.4"></script>
+<script src="config.js"></script>
+<script src="app.js?v=17.0"></script>
 </body>
 </html>
